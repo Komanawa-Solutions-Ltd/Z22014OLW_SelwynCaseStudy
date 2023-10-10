@@ -2,10 +2,8 @@
 created matt_dumont 
 on: 27/09/23
 """
-from get_n_data import get_all_n_data
-import pandas as pd
+from site_selection.get_n_data import get_all_n_data
 import matplotlib.pyplot as plt
-import numpy as np
 from project_base import unbacked_dir
 
 plot_dir = unbacked_dir.joinpath('raw_n_plots')
