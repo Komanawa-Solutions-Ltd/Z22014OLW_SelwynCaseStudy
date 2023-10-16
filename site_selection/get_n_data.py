@@ -25,6 +25,31 @@ age_sample_order = (
 )
 
 
+def get_paired_wells():
+    data = pd.read_csv(proj_root.joinpath('original_data/n_metadata_lisa.csv'), index_col=0)
+    paired_wells = data.loc[data['Paired well'].notna(), 'Paired well']
+    paired_wells = paired_wells.rename(index={'l35_0107': 'l36_0107'})
+    out_paired = {}
+    for site, psite in paired_wells.to_dict().items():
+        if site in out_paired.keys():
+            raise ValueError
+        if psite in out_paired.keys():
+            if out_paired[psite] != site:
+                raise ValueError
+            continue
+        if site == 'l37_0555':
+            out_paired[psite] = 'l37_0555'
+            continue
+
+        out_paired[site] = psite
+    t = set(out_paired.keys()).intersection(out_paired.values())
+    assert len(t) == 0, t
+    a = set(np.concatenate((paired_wells.index, paired_wells.values)))
+    b = set(out_paired.keys()).union(out_paired.values())
+    assert a == b, a.symmetric_difference(b)
+    return out_paired
+
+
 def get_all_n_data(recalc=False):
     save_path = unbacked_dir.joinpath('all_n_data.hdf')
     if not save_path.exists() or recalc:
@@ -64,6 +89,12 @@ def get_all_n_data(recalc=False):
             raise ValueError('bad data')
 
         outdata = raw_data[['site_id', 'type', 'datetime', 'nztmx', 'nztmy', 'depth', 'n_conc']].dropna()
+
+        # pair wells (from lisa scott)
+        out_paired = get_paired_wells()
+        outdata['site_id'] = outdata['site_id'].replace(out_paired)
+        assert not any(np.in1d(outdata['site_id'], out_paired.keys()))
+
         outlier_id_lof(outdata)
         outdata.to_hdf(save_path, 'ndata', complib='zlib', complevel=9)
     else:
@@ -121,14 +152,15 @@ def get_n_metadata(recalc=False):
         outdata['samples_per_year_mean'] = outdata['ncount'] / outdata['years_sampled']
         nztmx = ngroup['nztmx'].nunique()
         nztmy = ngroup['nztmy'].nunique()
-        assert (nztmx == 1).all()
-        assert (nztmy == 1).all()
+        paired = get_paired_wells()
+        assert ((nztmx == 1) | (nztmx.index.isin(paired.values()))).all()
+        assert ((nztmy == 1) | (nztmy.index.isin(paired.values()))).all()
         outdata['nztmx'] = ngroup['nztmx'].mean()
         outdata['nztmy'] = ngroup['nztmy'].mean()
         outdata['type'] = ngroup['type'].first()
 
         depth = ngroup['depth'].nunique()
-        assert (depth == 1).all()
+        assert ((depth == 1) | (depth.index.isin(paired.values()))).all()
         outdata['depth'] = ngroup['depth'].mean()
         outdata.loc[outdata.type == 'stream', 'depth'] = 0
 
@@ -149,12 +181,12 @@ def get_n_metadata(recalc=False):
         outdata.loc[idx, 'age_depth'] = 0
 
         for dist, depth in age_sample_order:
-            sites = outdata.index[outdata['age_mean'].isna()]
+            sites = outdata.index[outdata['age_median'].isna()]
             for site in sites:
                 site_x = outdata.loc[site, 'nztmx']
                 site_y = outdata.loc[site, 'nztmy']
                 site_depth = outdata.loc[site, 'depth']
-                dists = (np.sqrt((ages['nztmx'] - site_x) ** 2 + (ages['nztmy'] - site_y) ** 2)) ** 0.5
+                dists = (np.sqrt((ages['nztmx'] - site_x) ** 2 + (ages['nztmy'] - site_y) ** 2))
                 depths = np.abs(ages['depth'] - site_depth)
                 idx = ((dists <= dist) & (depths <= depth))
                 if idx.sum() == 0:
@@ -162,7 +194,28 @@ def get_n_metadata(recalc=False):
                 outdata.loc[site, 'age_dist'] = dist
                 outdata.loc[site, 'age_depth'] = depth
                 for c in keep_age_cols:
-                    outdata.loc[site, c] = ages.loc[idx, c].mean()
+                    outdata.loc[site, c] = ages.loc[idx, c].median()
+
+        # KEYNOTE manual ages
+        manual_age_changes = {
+            'm36_4655': (44.5, 'minimum age'),
+            'm36_5255': (44.5, 'minimum age'),
+            'm36_2679': (20, 'from M36_0160'),
+            'm36_3596': (46.5, 'from m36_269'),
+            'm36_3467': (20.5, 'from m36 5190'),
+            'm36_3588': (20.5, 'from m36 5190'),
+            'l36_0200': (20, 'gut feel'),
+            'm36_3683': (20.5, 'from m36 5190'),
+            'm36_0456': (12, 'FROM mean of m365190 and burnam bores'),
+            'l35_0910': (60, 'from nearby deep wells (100m rather than 200m)'),
+        }
+        for k, (age, comment) in manual_age_changes.items():
+            outdata.loc[k, 'age_mean'] = age
+            outdata.loc[k, 'age_median'] = age
+            outdata.loc[k, 'age_comment'] = comment
+
+        sw_sites = outdata['type'] == 'stream'
+        outdata.loc[sw_sites, 'age_mean'] = np.nan  # todo all sw sites at differnet ages: [5, 10, 20, 30]
 
         # todo filter sites here (ages), I think I'm done with this +- lisa comments
         filter_idx = (
@@ -172,9 +225,36 @@ def get_n_metadata(recalc=False):
                 & (outdata['nmedian'] > 2.4)
                 & (outdata['datetime_min'] < pd.Timestamp('2010-01-01'))
                 & (outdata['datetime_max'] > pd.Timestamp('2010-01-01'))
-                & (outdata['age_mean'] < 100)
+                & ((outdata['age_mean'] < 100) | (outdata['age_mean'].isna()))
         )
-        # todo save when done
+        outdata['keep0'] = filter_idx
+
+        # add in lisa data
+        lisa_data = pd.read_csv(proj_root.joinpath('original_data/n_metadata_lisa.csv'), index_col=0)
+        lisa_data['LS_keep'] = lisa_data['LS_keep'] != 'FALSE'
+        out_paired = get_paired_wells()
+        idx = lisa_data.index[lisa_data.index.isin(outdata.index)]
+        outdata.loc[idx, 'lisa_keep'] = lisa_data.loc[idx, 'LS_keep']
+        outdata['Lisa_Comment'] = ''
+        outdata.loc[idx, 'Lisa_Comment'] = lisa_data.loc[idx, 'COMMENT']
+
+        missing_idx = lisa_data.index[~lisa_data.index.isin(outdata.index)]
+        missing_idx_rep = [out_paired[x] for x in missing_idx]
+        outdata.loc[missing_idx_rep, 'lisa_keep'] = outdata.loc[missing_idx_rep, 'lisa_keep'] | lisa_data.loc[
+            missing_idx, 'LS_keep']
+        outdata.loc[missing_idx_rep, 'Lisa_Comment'] = (
+                pd.Series(outdata.loc[missing_idx_rep, 'Lisa_Comment'].values)
+                + pd.Series(lisa_data.loc[missing_idx, 'COMMENT'].values))
+
+        outdata['Lisa_Comment_bool'] = outdata['Lisa_Comment'] != ''
+        outdata['keep0|lisa'] = outdata['keep0'] | outdata['lisa_keep']
+        outdata['~keep0&lisa'] = ~outdata['keep0'] & outdata['lisa_keep']
+        assert not any(outdata.index.isin(out_paired.keys()))
+        assert all(np.in1d(list(out_paired.values()), outdata.index))
+
+        # todo save when done, likely there
+        outdata['lisa_keep'] = outdata['lisa_keep'].astype(bool)
+        outdata['final_keep'] = outdata['lisa_keep']
     else:
         outdata = pd.read_hdf(save_path, 'nmetadata')
         filter_idx = pd.read_hdf(save_path, 'filter')
@@ -212,10 +292,12 @@ def plot_from_metadata(metadata, outdir):
 
 
 if __name__ == '__main__':
-    meta, filt = get_n_metadata()
-    print(filt.sum())
-    meta['keep'] = filt
-    meta['dont_keep'] = ~filt
+    meta, filt = get_n_metadata(True)
+    for k in ['keep0',
+              'lisa_keep', 'Lisa_Comment_bool', 'keep0|lisa', '~keep0&lisa']:
+        print(k, meta[k].sum())
     meta.to_csv(unbacked_dir.joinpath('n_metadata.csv'))
-    plot_from_metadata(meta.loc[filt], unbacked_dir.joinpath('n_plots_use'))
-    plot_from_metadata(meta.loc[~filt], unbacked_dir.joinpath('n_plots_exclude'))
+    age_data = get_final_age_data()
+    age_data.to_csv(unbacked_dir.joinpath('n_age_data.csv'))
+    plot_from_metadata(meta.loc[meta['lisa_keep']], unbacked_dir.joinpath('n_plots_use'))
+    plot_from_metadata(meta.loc[~meta['lisa_keep']], unbacked_dir.joinpath('n_plots_exclude'))
