@@ -24,6 +24,19 @@ age_sample_order = (
     (10000, 10),
 )
 
+sw_name_mapper = {  # todo hopefully include stream names
+    'sq30878'
+    'sq30916'
+    'sq30976'
+    'sq30977'
+    'sq30992'
+    'sq32872'
+    'sq33468'
+    'sq34538'
+    'sq34540'
+    'sq35586'
+}
+
 
 def get_paired_wells():
     data = pd.read_csv(proj_root.joinpath('original_data/n_metadata_lisa.csv'), index_col=0)
@@ -92,9 +105,13 @@ def get_all_n_data(recalc=False):
 
         # pair wells (from lisa scott)
         out_paired = get_paired_wells()
+        outdata['isite_id'] = outdata['site_id'].replace({k: i for i, k in enumerate(outdata['site_id'].unique())})
         outdata['site_id'] = outdata['site_id'].replace(out_paired)
         assert not any(np.in1d(outdata['site_id'], out_paired.keys()))
 
+        # keynote adjust step change from matched sites offset visually
+        outdata.loc[outdata['isite_id'] == 27, 'n_conc'] += -0.6
+        add_manual_outlier(outdata)
         outlier_id_lof(outdata)
         outdata.to_hdf(save_path, 'ndata', complib='zlib', complevel=9)
     else:
@@ -208,6 +225,7 @@ def get_n_metadata(recalc=False):
             'm36_3683': (20.5, 'from m36 5190'),
             'm36_0456': (12, 'FROM mean of m365190 and burnam bores'),
             'l35_0910': (60, 'from nearby deep wells (100m rather than 200m)'),
+            'm36_0271': (25, 'from manual interpretation')
         }
         for k, (age, comment) in manual_age_changes.items():
             outdata.loc[k, 'age_mean'] = age
@@ -215,9 +233,8 @@ def get_n_metadata(recalc=False):
             outdata.loc[k, 'age_comment'] = comment
 
         sw_sites = outdata['type'] == 'stream'
-        outdata.loc[sw_sites, 'age_mean'] = np.nan  # todo all sw sites at differnet ages: [5, 10, 20, 30]
+        outdata.loc[sw_sites, 'age_mean'] = np.nan
 
-        # todo filter sites here (ages), I think I'm done with this +- lisa comments
         filter_idx = (
                 (outdata['ncount'] > 5)
                 & (outdata['years_sampled'] > 5)
@@ -252,14 +269,13 @@ def get_n_metadata(recalc=False):
         assert not any(outdata.index.isin(out_paired.keys()))
         assert all(np.in1d(list(out_paired.values()), outdata.index))
 
-        # todo save when done, likely there
         outdata['lisa_keep'] = outdata['lisa_keep'].astype(bool)
         outdata['final_keep'] = outdata['lisa_keep']
+        outdata.to_hdf(save_path, 'nmetadata', complib='zlib', complevel=9)
     else:
         outdata = pd.read_hdf(save_path, 'nmetadata')
-        filter_idx = pd.read_hdf(save_path, 'filter')
 
-    return outdata, filter_idx
+    return outdata
 
 
 def get_outlier_free_ndata(recalc=False):
@@ -267,15 +283,14 @@ def get_outlier_free_ndata(recalc=False):
 
 
 def plot_from_metadata(metadata, outdir):
+    from kendall_stats import MannKendall
     outdir.mkdir(exist_ok=True, parents=True)
     ndata = get_all_n_data()
     for site in metadata.index:
-        fig, ax = plt.subplots(figsize=(8, 10))
         site_type = ndata.loc[ndata['site_id'] == site, 'type'].unique()[0]
-        for outlier, c in zip([True, False], ['r', 'b']):
-            site_data = ndata[(ndata['site_id'] == site) & (ndata['unsup_outlier_auto'] == outlier)]
-            ax.scatter(site_data['datetime'], site_data['n_conc'], color=c, label='outlier' if outlier else 'inlier')
-
+        all_data = ndata[ndata['site_id'] == site].set_index('datetime')
+        t = MannKendall(all_data['n_conc'])
+        fig, ax, leg_data = t.plot_data()
         mdist = metadata.loc[site, 'age_dist']
         if mdist == 0:
             lag_key = 'lag_at_site'
@@ -287,17 +302,128 @@ def plot_from_metadata(metadata, outdir):
                      f'mrt={metadata.loc[site, "age_mean"]:.2f} years\n'
                      f'mk={metadata.loc[site, "mk_trend"]}, p={metadata.loc[site, "mk_p"]:.2f}')
         ax.legend()
-        fig.savefig(outdir.joinpath(f'{site}.png'))
+        fig.savefig(outdir.joinpath(f'{site}.pdf'))
         plt.close(fig)
 
 
+def add_manual_outlier(data):
+    data['exclude_for_noise'] = False
+    data['always_exclude'] = False
+
+    # keep greater than
+    lims = {
+        'l35_0171': 1.75,
+        'm36_5248': 4,
+        'm36_7734': 3,
+        'm36_8187': 4,
+        'l36_0584': 6,
+        "m36_3683": 1,
+    }
+    for k, v in lims.items():
+        idx = (data.site_id == k) & (data.n_conc < v)
+        data.loc[idx, 'always_exclude'] = True
+
+    # keep less than
+    lims = {
+        'l36_0059': 3.5,
+        'l36_0682': 12,
+        'l36_0725': 7,
+        'l36_0871': 9.5,
+        'm36_8187': 11.5,
+        'm36_0456': 11,
+        'l35_0190': 11,
+        'l35_0205': 9,
+        'l35_0596': 12,
+    }
+    for k, v in lims.items():
+        idx = (data.site_id == k) & (data.n_conc > v)
+        data.loc[idx, 'always_exclude'] = True
+
+    # time management
+    lims = {
+        'l36_0121': '2008-02-01',
+        'l35_0009': '2014-01-01',
+        'l36_0477': '2000-01-01',
+        'm36_0698': '1996-01-01',
+        'm36_5248': '2008-01-01',
+        "m36_3683": '1997-01-01',
+        'l36_2122': '2006-01-01',
+        'm36_8187': '2006-01-01',
+    }
+    for k, v in lims.items():
+        idx = (data.site_id == k) & (data.datetime < pd.to_datetime(v))
+        data.loc[idx, 'exclude_for_noise'] = True
+
+    lims = {
+        'l36_0089': '2015-01-01',
+    }
+    for k,v in lims.items():
+        idx = (data.site_id == k) & (data.datetime > pd.to_datetime(v))
+        data.loc[idx, 'exclude_for_noise'] = True
+
+
+def plot_wierdi():
+    data = get_all_n_data(True)
+    sites = [
+        'm36_3588',
+        'm36_3683',
+        'm36_4227',
+        'l36_2122',
+    ]
+    for site in sites:
+        tdata = data[data['site_id'] == site]
+        fig, ax = plt.subplots()
+        ax.scatter(tdata['datetime'], tdata['n_conc'], c=tdata['isite_id'])
+        ax.set_title(site)
+    plt.show()
+
+def plot_outlier_managment(metadata, outdir):
+    from kendall_stats import MannKendall
+
+    outdir.mkdir(exist_ok=True, parents=True)
+    ndata = get_all_n_data()
+    for site in metadata.index:
+        site_type = ndata.loc[ndata['site_id'] == site, 'type'].unique()[0]
+        all_data = ndata[ndata['site_id'] == site].set_index('datetime')
+        exclude_mk_idx = ~(all_data['exclude_for_noise'] | all_data['always_exclude'])
+
+        t = MannKendall(all_data.loc[exclude_mk_idx,'n_conc'])
+        fig, ax = plt.subplots(figsize=(14, 8))
+        fig, ax, (handles, labels) = t.plot_data(color='b', ax=ax)
+        idx = all_data['exclude_for_noise']
+        sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='r', label='exclude_for_noise')
+        handles.append(sc)
+        labels.append('exclude_for_noise')
+        idx = all_data['always_exclude']
+        sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='k', label='always_exclude')
+        handles.append(sc)
+        labels.append('always_exclude')
+
+
+        mdist = metadata.loc[site, 'age_dist']
+        if mdist == 0:
+            lag_key = 'lag_at_site'
+        else:
+            lag_key = f'lag_within_{mdist}m_+-_{metadata.loc[site, "age_depth"]}m_depth'
+
+        ax.set_title(f'{site_type} {site}, depth={metadata.loc[site, "depth"]:.0f}m\n'
+                     f'{lag_key}\n'
+                     f'mrt={metadata.loc[site, "age_mean"]:.2f} years\n'
+                     f'mk={metadata.loc[site, "mk_trend"]}, p={metadata.loc[site, "mk_p"]:.2f}')
+        ax.legend(handles, labels)
+        fig.savefig(outdir.joinpath(f'{site}.png'))
+        plt.close(fig)
+
+# todo look at streams in context of flow if possible
+# todo all sw sites at differnet ages: [5, 10, 20, 30]
+
 if __name__ == '__main__':
-    meta, filt = get_n_metadata(True)
+    #  plot_wierdi() manually handled
+    meta = get_n_metadata(True)
     for k in ['keep0',
               'lisa_keep', 'Lisa_Comment_bool', 'keep0|lisa', '~keep0&lisa']:
         print(k, meta[k].sum())
     meta.to_csv(unbacked_dir.joinpath('n_metadata.csv'))
     age_data = get_final_age_data()
     age_data.to_csv(unbacked_dir.joinpath('n_age_data.csv'))
-    plot_from_metadata(meta.loc[meta['lisa_keep']], unbacked_dir.joinpath('n_plots_use'))
-    plot_from_metadata(meta.loc[~meta['lisa_keep']], unbacked_dir.joinpath('n_plots_exclude'))
+    plot_outlier_managment(meta.loc[meta['lisa_keep']], unbacked_dir.joinpath('n_plots_use_meta'))
