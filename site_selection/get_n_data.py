@@ -25,16 +25,16 @@ age_sample_order = (
 )
 
 sw_name_mapper = {  # todo hopefully include stream names
-    'sq30878'
-    'sq30916'
-    'sq30976'
-    'sq30977'
-    'sq30992'
-    'sq32872'
-    'sq33468'
-    'sq34538'
-    'sq34540'
-    'sq35586'
+    'sq30878': 'LII Stream u/s Pannetts Rd',
+    'sq30916': 'Selwyn River u/s Coes Ford',
+    'sq30976': 'Boggy Creek u/s Lake Road',
+    'sq30977': 'Doyleston Drain at Drain Rd',
+    'sq30992': 'Harts Creek d/s Lower Lake Rd',
+    'sq32872': 'Halswell River at River Road bridge',
+    'sq33468': 'Silverstream u/s Selwyn River confl',
+    'sq34538': 'Lee River u/s Brooklands Farm bridge',
+    'sq34540': 'Waikekewai Creek u/s Gullivers Road',
+    'sq35586': 'Mathias Stream at gauging site',
 }
 
 
@@ -357,7 +357,7 @@ def add_manual_outlier(data):
     lims = {
         'l36_0089': '2015-01-01',
     }
-    for k,v in lims.items():
+    for k, v in lims.items():
         idx = (data.site_id == k) & (data.datetime > pd.to_datetime(v))
         data.loc[idx, 'exclude_for_noise'] = True
 
@@ -377,6 +377,7 @@ def plot_wierdi():
         ax.set_title(site)
     plt.show()
 
+
 def plot_outlier_managment(metadata, outdir):
     from kendall_stats import MannKendall
 
@@ -387,7 +388,7 @@ def plot_outlier_managment(metadata, outdir):
         all_data = ndata[ndata['site_id'] == site].set_index('datetime')
         exclude_mk_idx = ~(all_data['exclude_for_noise'] | all_data['always_exclude'])
 
-        t = MannKendall(all_data.loc[exclude_mk_idx,'n_conc'])
+        t = MannKendall(all_data.loc[exclude_mk_idx, 'n_conc'])
         fig, ax = plt.subplots(figsize=(14, 8))
         fig, ax, (handles, labels) = t.plot_data(color='b', ax=ax)
         idx = all_data['exclude_for_noise']
@@ -398,7 +399,6 @@ def plot_outlier_managment(metadata, outdir):
         sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='k', label='always_exclude')
         handles.append(sc)
         labels.append('always_exclude')
-
 
         mdist = metadata.loc[site, 'age_dist']
         if mdist == 0:
@@ -413,6 +413,7 @@ def plot_outlier_managment(metadata, outdir):
         ax.legend(handles, labels)
         fig.savefig(outdir.joinpath(f'{site}.png'))
         plt.close(fig)
+
 
 # todo look at streams in context of flow if possible
 # todo all sw sites at differnet ages: [5, 10, 20, 30]
