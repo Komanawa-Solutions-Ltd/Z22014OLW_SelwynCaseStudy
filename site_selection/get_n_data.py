@@ -289,6 +289,8 @@ def plot_from_metadata(metadata, outdir):
     for site in metadata.index:
         site_type = ndata.loc[ndata['site_id'] == site, 'type'].unique()[0]
         all_data = ndata[ndata['site_id'] == site].set_index('datetime')
+        if len(all_data)<3:
+            continue
         t = MannKendall(all_data['n_conc'])
         fig, ax, leg_data = t.plot_data()
         mdist = metadata.loc[site, 'age_dist']
@@ -302,7 +304,7 @@ def plot_from_metadata(metadata, outdir):
                      f'mrt={metadata.loc[site, "age_mean"]:.2f} years\n'
                      f'mk={metadata.loc[site, "mk_trend"]}, p={metadata.loc[site, "mk_p"]:.2f}')
         ax.legend()
-        fig.savefig(outdir.joinpath(f'{site}.pdf'))
+        fig.savefig(outdir.joinpath(f'{site}.png'))
         plt.close(fig)
 
 
@@ -428,3 +430,4 @@ if __name__ == '__main__':
     age_data = get_final_age_data()
     age_data.to_csv(unbacked_dir.joinpath('n_age_data.csv'))
     plot_outlier_managment(meta.loc[meta['lisa_keep']], unbacked_dir.joinpath('n_plots_use_meta'))
+    plot_from_metadata(meta.loc[~meta['lisa_keep']], unbacked_dir.joinpath('n_plots_exclude_meta'))
