@@ -1,0 +1,129 @@
+"""
+created matt_dumont 
+on: 27/10/23
+"""
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+from site_selection.get_n_data import get_n_metadata, get_all_n_data, get_final_sites, plot_single_site
+from project_base import generated_data_dir, precision, unbacked_dir
+from gw_age_tools import predict_historical_source_conc, make_age_dist, check_age_inputs, predict_future_conc_bepm
+
+reduction = 0.20
+
+
+def get_site_source_conc(site, recalc=False):
+    save_path = generated_data_dir.joinpath('true_source_conc_slope_init.hdf')
+    if save_path.exists() and not recalc:
+        try:
+            return pd.read_hdf(save_path, key=site)
+        except KeyError:
+            pass
+    metadata = get_n_metadata().loc[site]
+    init_conc = metadata['conc_2010']
+    mrt = metadata['age_mean']
+    mrt_p1 = metadata['age_mean']
+    mrt_p2 = metadata['age_mean']
+    frac_p1 = metadata['frac_1']
+    assert np.isclose(frac_p1, 1)
+    f_p1 = metadata['f_p1']
+    f_p2 = metadata['f_p1']
+    prev_slope = metadata['slope_yr']
+    min_conc = min(metadata['nmin'], 1)
+    max_conc = max(metadata['nmax'], 20)
+
+    if np.isclose(prev_slope, 0):
+        mrt, mrt_p2 = check_age_inputs(mrt, mrt_p1, mrt_p2, frac_p1, precision, f_p1, f_p2)
+        age_step, ages, age_fractions = make_age_dist(mrt, mrt_p1, mrt_p2, frac_p1, precision, f_p1, f_p2)
+        hist = pd.Series(index=ages * -1, data=init_conc)
+    else:
+        hist = predict_historical_source_conc(init_conc, mrt, mrt_p1, mrt_p2, frac_p1, f_p1, f_p2, prev_slope, max_conc,
+                                              min_conc, start_age=np.nan, precision=precision)
+        hist.to_hdf(save_path, key=site, complib='zlib', complevel=9)
+    return hist
+
+
+def get_site_true_recept_conc(site, recalc=False):
+    save_path = generated_data_dir.joinpath('true_receptor_conc_slope_init.hdf')
+    if save_path.exists() and not recalc:
+        try:
+            return pd.read_hdf(save_path, key=site)
+        except KeyError:
+            pass
+    hist = get_site_source_conc(site)
+    metadata = get_n_metadata().loc[site]
+    init_conc = metadata['conc_2010']
+    mrt = metadata['age_mean']
+    mrt_p1 = metadata['age_mean']
+    mrt_p2 = metadata['age_mean']
+    frac_p1 = metadata['frac_1']
+    assert np.isclose(frac_p1, 1)
+    f_p1 = metadata['f_p1']
+    f_p2 = metadata['f_p1']
+    prev_slope = metadata['slope_yr']
+    min_conc = min(metadata['nmin'], 1)
+    max_conc = max(metadata['nmax'], 20)
+    hist.loc[10] = hist.loc[0] * (1 - reduction)
+    hist.loc[100] = hist.loc[0] * (1 - reduction)
+    receptor_conc = predict_future_conc_bepm(once_and_future_source_conc=hist,
+                                             predict_start=-20, predict_stop=100,
+                                             mrt_p1=mrt_p1, frac_p1=frac_p1, f_p1=f_p1, f_p2=f_p2, mrt=mrt, mrt_p2=None,
+                                             fill_value=min_conc,
+                                             fill_threshold=.5, precision=precision, pred_step=10 ** -precision)
+    receptor_conc.to_hdf(save_path, key=site, complib='zlib', complevel=9)
+
+
+def recalc_all_sites(recalc=False):
+    """
+    a convinence function to recalculate all sites
+    :param recalc: boolean whether to recalculate all sites (True), or only those missing data (default)
+    :return:
+    """
+    sites = get_final_sites()
+    for i, site in enumerate(sites):
+        print(f'{i + 1}/{len(sites)}: {site}')
+        get_site_source_conc(site, recalc=recalc)
+        get_site_true_recept_conc(site, recalc=recalc)
+
+
+def plot_all_sites():  # todo
+    save_dir = unbacked_dir.joinpath('true_conc_plots')
+    save_dir.mkdir(exist_ok=True)
+    ndata = get_all_n_data()
+    metadata = get_n_metadata()
+    for site in get_final_sites():
+        fig, ax, handles, labels = plot_single_site(site, ndata, metadata)
+        source = get_site_source_conc(site)
+        source.loc[10] = source.loc[0] * (1 - reduction)
+        source.loc[100] = source.loc[0] * (1 - reduction)
+        source = source.loc[source.index >= -20].sort_index()
+        receptor = get_site_true_recept_conc(site)
+        t = ax.plot(
+            pd.to_datetime('2010-01-01') + pd.to_timedelta(source.index.values * 365.25, unit='day'),
+            source,
+            color='gold', ls='--', label='Source')
+        handles.append(t[0])
+        labels.append('Source')
+        t = ax.plot(
+            pd.to_datetime('2010-01-01') + pd.to_timedelta(receptor.index.values * 365.25, unit='day'),
+            receptor, color='orange', label='Modelled Receptor')
+        handles.append(t[0])
+        labels.append('Receptor')
+        ax.axvline(pd.to_datetime('2010-01-01'), ls=':', color='k', alpha=0.5)
+        ax.legend(handles, labels, loc='upper right')
+        fig.tight_layout()
+        fig.savefig(save_dir.joinpath(f'{site}_true_conc.png'))
+        plt.close(fig)
+
+if __name__ == '__main__':
+    plot_all_sites() # todo manually review these sites
+
+    # todo manually follow up with:
+    #  l36_0089
+    #  l36_1313
+    #  l36_2094
+    #  l36_2122
+    #  m36_0297
+

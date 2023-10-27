@@ -95,9 +95,14 @@ def _generate_noise_data(metadata):
     for site in metadata.index:
         site_ndata = ndata.loc[ndata['site_id'] == site]
         trend = metadata.loc[site, 'mk_trend']
-        metadata.loc[site, 'conc_2010'] = site_ndata.loc[
+        temp = site_ndata.loc[
             (site_ndata['datetime'] >= pd.Timestamp('2008-01-01'))
-            & (site_ndata['datetime'] >= pd.Timestamp('2012-01-01')), 'n_conc'].mean()
+            & (site_ndata['datetime'] <= pd.Timestamp('2012-01-01')), 'n_conc'].median()
+
+        if pd.isna(temp):
+            if trend <= 0:
+                temp = site_ndata['n_conc'].median()
+        metadata.loc[site, 'conc_2010'] = temp
 
         if trend <= 0:
             metadata.loc[site, 'noise'] = metadata.loc[site, 'nstd']
@@ -115,6 +120,26 @@ def _generate_noise_data(metadata):
             metadata.loc[site, 'slope_yr'] = senslope
             metadata.loc[site, 'intercept'] = senintercept
             metadata.loc[site, 'noise'] = site_ndata['resid'].std()
+
+def _manage_manual_age(metadata):
+    # KEYNOTE manual ages
+    manual_age_changes = {
+        'm36_4655': (44.5, 'minimum surrounding age'),
+        'm36_5255': (44.5, 'minimum surrounding age'),
+        'm36_2679': (20, 'from M36_0160'),
+        'm36_3596': (46.5, 'from m36_269'),
+        'm36_3467': (20.5, 'from m36_5190'),
+        'm36_3588': (20.5, 'from m36_5190'),
+        'l36_0200': (20, 'from manual interpretation'),
+        'm36_3683': (20.5, 'from m36_5190'),
+        'm36_0456': (12, 'from mean of m36_5190 and Burnam bores'),
+        'l35_0910': (60, 'from nearby deep wells (100m rather than 200m)'),
+        'm36_0271': (25, 'from manual interpretation')
+    }
+    for k0, (age, comment) in manual_age_changes.items():
+        metadata.loc[k0, 'age_mean'] = age
+        metadata.loc[k0, 'age_median'] = age
+        metadata.loc[k0, 'age_comment'] = comment
 
 
 def _add_manual_outlier(data):
@@ -173,7 +198,7 @@ def _add_manual_outlier(data):
         data.loc[idx, 'exclude_for_noise'] = True
 
 
-def _plot_wierdi():
+def _plot_wierdi():  # manually handled
     data = get_all_n_data(True)
     sites = [
         'm36_3588',
@@ -189,47 +214,73 @@ def _plot_wierdi():
     plt.show()
 
 
-def plot_outlier_managment(metadata, outdir):
-    from kendall_stats import MannKendall
+def plot_single_site(site, ndata, metadata):
+    """
+    plot a single site
+    :param site: site id
+    :param ndata: all n data (from get_all_n_data)
+    :param metadata: all metadata (from get_n_metadata)
+    :return: fig, ax, handles, labels
+    """
+    site_type = ndata.loc[ndata['site_id'] == site, 'type'].unique()[0]
+    all_data = ndata[ndata['site_id'] == site].set_index('datetime')
+    exclude_mk_idx = ~(all_data['exclude_for_noise'] | all_data['always_exclude'])
 
+    t = MannKendall(all_data.loc[exclude_mk_idx, 'n_conc'])
+    fig, ax = plt.subplots(figsize=(14, 8))
+    fig, ax, (handles, labels) = t.plot_data(color='b', ax=ax)
+    idx = all_data['exclude_for_noise']
+    sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='r', label='exclude_for_noise')
+    handles.append(sc)
+    labels.append('exclude_for_noise')
+    idx = all_data['always_exclude']
+    sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='k', label='always_exclude')
+    handles.append(sc)
+    labels.append('always_exclude')
+
+    mdist = metadata.loc[site, 'age_dist']
+    if mdist == 0:
+        lag_key = 'MRT sampled'
+    elif pd.notna(metadata.loc[site, 'age_comment']):
+        lag_key = f'MRT inferred: {metadata.loc[site, "age_comment"]}'
+    else:
+        lag_key = f'MRT inferred: median within {mdist}m +- {metadata.loc[site, "age_depth"]}m depth'
+
+    ax.set_title(
+        f'{site_type} {site}, depth={metadata.loc[site, "depth"]:.0f}m '
+        f'mrt={metadata.loc[site, "age_mean"]:.2f} yr\n'
+        f'mk={metadata.loc[site, "mk_trend"]}, p={metadata.loc[site, "mk_p"]:.2f}\n'
+        f'lag={lag_key}\n'
+        f'noise={metadata.loc[site, "noise"]:.2f} mg/L, '
+        f'slope={metadata.loc[site, "slope_yr"]:.2f} mg/L/yr, '
+        f'2008-2012 concentration={metadata.loc[site, "conc_2010"]:.2f} mg/L')
+    ax.legend(handles, labels)
+    return fig, ax, handles, labels
+
+
+def plot_outlier_managment(metadata, outdir):
+    """
+    plot the outlier data plots for all sites in metadata
+    :param metadata:
+    :param outdir: dir to save plots
+    :return:
+    """
     outdir.mkdir(exist_ok=True, parents=True)
     ndata = get_all_n_data()
     for site in metadata.index:
-        site_type = ndata.loc[ndata['site_id'] == site, 'type'].unique()[0]
-        all_data = ndata[ndata['site_id'] == site].set_index('datetime')
-        exclude_mk_idx = ~(all_data['exclude_for_noise'] | all_data['always_exclude'])
-
-        t = MannKendall(all_data.loc[exclude_mk_idx, 'n_conc'])
-        fig, ax = plt.subplots(figsize=(14, 8))
-        fig, ax, (handles, labels) = t.plot_data(color='b', ax=ax)
-        idx = all_data['exclude_for_noise']
-        sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='r', label='exclude_for_noise')
-        handles.append(sc)
-        labels.append('exclude_for_noise')
-        idx = all_data['always_exclude']
-        sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='k', label='always_exclude')
-        handles.append(sc)
-        labels.append('always_exclude')
-
-        mdist = metadata.loc[site, 'age_dist']
-        if mdist == 0:
-            lag_key = 'lag_at_site'
-        else:
-            lag_key = f'lag_within_{mdist}m_+-_{metadata.loc[site, "age_depth"]}m_depth'
-
-        ax.set_title(
-            f'{site_type} {site}, depth={metadata.loc[site, "depth"]:.0f}m'
-            f'mrt={metadata.loc[site, "age_mean"]:.2f} yr\n'
-            f'mk={metadata.loc[site, "mk_trend"]}, p={metadata.loc[site, "mk_p"]:.2f}\n'
-            f'noise={metadata.loc[site, "noise"]:.2f} mg/L, '
-            f'slope={metadata.loc[site, "slope_yr"]:.2f} mg/L/yr, '
-            f'2008-2012 concentration={metadata.loc[site, "conc_2010"]:.2f} mg/L')
-        ax.legend(handles, labels)
+        fig, ax, h, l = plot_single_site(site, ndata, metadata)
+        fig.tight_layout()
         fig.savefig(outdir.joinpath(f'{site}.png'))
         plt.close(fig)
 
 
 def get_all_n_data(recalc=False, duplicate_strs=True):
+    """
+    get all n data, including stream data cleaned and ready to use with outlier flags
+    :param recalc: recalc from raw data
+    :param duplicate_strs: bool if true duplicate stream data for each age (so sites match)
+    :return:
+    """
     save_path = generated_data_dir.joinpath('all_n_data.hdf')
     if not save_path.exists() or recalc:
         raw_data = pd.read_excel(
@@ -301,6 +352,11 @@ def get_all_n_data(recalc=False, duplicate_strs=True):
 
 
 def get_n_metadata(recalc=False):
+    """
+    get metadata for all n data, cleaned with key data (e.g. noise), and keep boolean indexes
+    :param recalc: bool if true recalc from raw data
+    :return:
+    """
     save_path = generated_data_dir.joinpath('all_n_metadata.hdf')
     if not save_path.exists() or recalc:
         ndata = get_all_n_data(recalc=recalc, duplicate_strs=False)
@@ -367,24 +423,7 @@ def get_n_metadata(recalc=False):
                 for c in keep_age_cols:
                     outdata.loc[site, c] = ages.loc[idx, c].median()
 
-        # KEYNOTE manual ages
-        manual_age_changes = {
-            'm36_4655': (44.5, 'minimum age'),
-            'm36_5255': (44.5, 'minimum age'),
-            'm36_2679': (20, 'from M36_0160'),
-            'm36_3596': (46.5, 'from m36_269'),
-            'm36_3467': (20.5, 'from m36 5190'),
-            'm36_3588': (20.5, 'from m36 5190'),
-            'l36_0200': (20, 'gut feel'),
-            'm36_3683': (20.5, 'from m36 5190'),
-            'm36_0456': (12, 'FROM mean of m365190 and burnam bores'),
-            'l35_0910': (60, 'from nearby deep wells (100m rather than 200m)'),
-            'm36_0271': (25, 'from manual interpretation')
-        }
-        for k0, (age, comment) in manual_age_changes.items():
-            outdata.loc[k0, 'age_mean'] = age
-            outdata.loc[k0, 'age_median'] = age
-            outdata.loc[k0, 'age_comment'] = comment
+        _manage_manual_age(outdata)
 
         sw_sites = outdata['type'] == 'stream'
 
@@ -450,37 +489,28 @@ def get_n_metadata(recalc=False):
     else:
         outdata = pd.read_hdf(save_path, 'nmetadata')
     assert isinstance(outdata, pd.DataFrame)
+
+    # fill frac_1, f_p1
+    outdata['frac_1'] = outdata['frac_1'].fillna(1)
+    outdata['f_p1'] = outdata['f_p1'].fillna(outdata['f_p1'].median())
+
+    temp = outdata.loc[outdata['final_keep'], [
+        'age_mean', 'frac_1', 'f_p1', 'slope_yr', 'noise', 'nmin', 'nmax', 'conc_2010', 'mk_trend'
+    ]].notna().all()
+    assert temp.all(), f'na data in necessary fields of final_keep: {temp}'  # todo any others
     return outdata
 
 
-def plot_from_metadata(metadata, outdir):
-    from kendall_stats import MannKendall
-    outdir.mkdir(exist_ok=True, parents=True)
-    ndata = get_all_n_data()
-    for site in metadata.index:
-        site_type = ndata.loc[ndata['site_id'] == site, 'type'].unique()[0]
-        all_data = ndata[ndata['site_id'] == site].set_index('datetime')
-        if len(all_data) < 3:
-            continue
-        t = MannKendall(all_data['n_conc'])
-        fig, ax, leg_data = t.plot_data()
-        mdist = metadata.loc[site, 'age_dist']
-        if mdist == 0:
-            lag_key = 'lag_at_site'
-        else:
-            lag_key = f'lag_within_{mdist}m_+-_{metadata.loc[site, "age_depth"]}m_depth'
-
-        ax.set_title(f'{site_type} {site}, depth={metadata.loc[site, "depth"]:.0f}m\n'
-                     f'{lag_key}\n'
-                     f'mrt={metadata.loc[site, "age_mean"]:.2f} years\n'
-                     f'mk={metadata.loc[site, "mk_trend"]}, p={metadata.loc[site, "mk_p"]:.2f}')
-        ax.legend()
-        fig.savefig(outdir.joinpath(f'{site}.png'))
-        plt.close(fig)
+def get_final_sites():
+    """
+    convenience function to get final site_ids
+    :return:
+    """
+    meta = get_n_metadata(False)
+    return meta.loc[meta['final_keep']].index
 
 
 if __name__ == '__main__':
-    #  plot_wierdi() manually handled
     meta = get_n_metadata(True)
     for k in ['keep0',
               'lisa_keep', 'Lisa_Comment_bool', 'keep0|lisa', '~keep0&lisa']:

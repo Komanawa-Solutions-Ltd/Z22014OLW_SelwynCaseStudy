@@ -5,6 +5,7 @@ on: 22/03/22
 from pathlib import Path
 from kslcore import KslEnv
 
+precision=2
 project_name = 'Z22014OLW_SelwynCaseStudy'
 proj_root = Path(__file__).parent  # base of git repo
 generated_data_dir = proj_root.joinpath('GeneratedData')
