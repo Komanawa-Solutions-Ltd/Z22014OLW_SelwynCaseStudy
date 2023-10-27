@@ -4,7 +4,7 @@ on: 27/09/23
 """
 import numpy as np
 from matplotlib import pyplot as plt
-from project_base import proj_root, unbacked_dir
+from project_base import proj_root, unbacked_dir, generated_data_dir
 import pandas as pd
 from sklearn.neighbors import LocalOutlierFactor
 from kendall_stats import MannKendall
@@ -23,22 +23,23 @@ age_sample_order = (
     (10000, 5),
     (10000, 10),
 )
+sw_ages = (5, 10, 20, 30)
 
-sw_name_mapper = {  # todo hopefully include stream names
-    'sq30878': 'LII Stream u/s Pannetts Rd',
-    'sq30916': 'Selwyn River u/s Coes Ford',
-    'sq30976': 'Boggy Creek u/s Lake Road',
-    'sq30977': 'Doyleston Drain at Drain Rd',
-    'sq30992': 'Harts Creek d/s Lower Lake Rd',
-    'sq32872': 'Halswell River at River Road bridge',
-    'sq33468': 'Silverstream u/s Selwyn River confl',
-    'sq34538': 'Lee River u/s Brooklands Farm bridge',
-    'sq34540': 'Waikekewai Creek u/s Gullivers Road',
-    'sq35586': 'Mathias Stream at gauging site',
+sw_name_mapper = {
+    'sq30878': 'LII Stream-Pannetts Rd',
+    'sq30916': 'Selwyn River-Coes Ford',
+    'sq30976': 'Boggy Creek - Lake Rd',
+    'sq30977': 'Doyleston Drain - Drain Rd',
+    'sq30992': 'Harts Creek - Lower Lake Rd',
+    'sq32872': 'Halswell River - River Rd',
+    'sq33468': 'Silverstream - Selwyn River',
+    'sq34538': 'Lee River - Brooklands Farm',
+    'sq34540': 'Waikekewai Creek - Gullivers Rd',
+    'sq35586': 'Mathias Stream',
 }
 
 
-def get_paired_wells():
+def _get_paired_wells():
     data = pd.read_csv(proj_root.joinpath('original_data/n_metadata_lisa.csv'), index_col=0)
     paired_wells = data.loc[data['Paired well'].notna(), 'Paired well']
     paired_wells = paired_wells.rename(index={'l35_0107': 'l36_0107'})
@@ -63,8 +64,173 @@ def get_paired_wells():
     return out_paired
 
 
-def get_all_n_data(recalc=False):
-    save_path = unbacked_dir.joinpath('all_n_data.hdf')
+def _outlier_id_lof(ndata, contaminations=None):
+    if contaminations is None:
+        contaminations = ['auto']
+    assert isinstance(ndata, pd.DataFrame)
+    refs = ndata['site_id'].unique()
+    for ref in refs:
+        idx = ndata['site_id'] == ref
+        if np.sum(idx) < 5:
+            continue
+        x = ndata.loc[idx, ['datetime', 'n_conc']]
+        x.loc[:, 'datetime'] = (x.datetime - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+        x = x.values
+
+        # normalize data
+        x = (x - x.min(axis=0)) / (x.max(axis=0) - x.min(axis=0))
+
+        assert np.isnan(x).sum() == 0
+        for cont in contaminations:
+            clf = LocalOutlierFactor(contamination=cont, n_jobs=1)
+            y_pred = clf.fit_predict(x)
+            ndata.loc[idx, f'unsup_outlier_{cont}'] = y_pred < 0
+
+    return ndata
+
+
+def _generate_noise_data(metadata):
+    ndata = get_all_n_data()
+    ndata = ndata.loc[~(ndata['always_exclude'] | ndata['exclude_for_noise'])]
+    for site in metadata.index:
+        site_ndata = ndata.loc[ndata['site_id'] == site]
+        trend = metadata.loc[site, 'mk_trend']
+        metadata.loc[site, 'conc_2010'] = site_ndata.loc[
+            (site_ndata['datetime'] >= pd.Timestamp('2008-01-01'))
+            & (site_ndata['datetime'] >= pd.Timestamp('2012-01-01')), 'n_conc'].mean()
+
+        if trend <= 0:
+            metadata.loc[site, 'noise'] = metadata.loc[site, 'nstd']
+            metadata.loc[site, 'slope_yr'] = 0
+            metadata.loc[site, 'intercept'] = np.nan
+        elif pd.isna(trend):
+            pass
+        else:
+            site_ndata['yr'] = (site_ndata['datetime'] - site_ndata['datetime'].min()).dt.days / 365.25  # convert to yr
+            site_ndata = site_ndata.set_index('yr')
+            mk = MannKendall(site_ndata['n_conc'])
+            senslope, senintercept, lo_slope, up_slope = mk.calc_senslope()
+            site_ndata['pred'] = senslope * site_ndata.index + senintercept
+            site_ndata['resid'] = site_ndata['n_conc'] - site_ndata['pred']
+            metadata.loc[site, 'slope_yr'] = senslope
+            metadata.loc[site, 'intercept'] = senintercept
+            metadata.loc[site, 'noise'] = site_ndata['resid'].std()
+
+
+def _add_manual_outlier(data):
+    data['exclude_for_noise'] = False
+    data['always_exclude'] = False
+
+    # keep greater than
+    lims = {
+        'l35_0171': 1.75,
+        'm36_5248': 4,
+        'm36_7734': 3,
+        'm36_8187': 4,
+        'l36_0584': 6,
+        "m36_3683": 1,
+    }
+    for k0, v in lims.items():
+        idx = (data.site_id == k0) & (data.n_conc < v)
+        data.loc[idx, 'always_exclude'] = True
+
+    # keep less than
+    lims = {
+        'l36_0059': 3.5,
+        'l36_0682': 12,
+        'l36_0725': 7,
+        'l36_0871': 9.5,
+        'm36_8187': 11.5,
+        'm36_0456': 11,
+        'l35_0190': 11,
+        'l35_0205': 9,
+        'l35_0596': 12,
+    }
+    for k0, v in lims.items():
+        idx = (data.site_id == k0) & (data.n_conc > v)
+        data.loc[idx, 'always_exclude'] = True
+
+    # time management
+    lims = {
+        'l36_0121': '2008-02-01',
+        'l35_0009': '2014-01-01',
+        'l36_0477': '2000-01-01',
+        'm36_0698': '1996-01-01',
+        'm36_5248': '2008-01-01',
+        "m36_3683": '1997-01-01',
+        'l36_2122': '2006-01-01',
+        'm36_8187': '2006-01-01',
+    }
+    for k0, v in lims.items():
+        idx = (data.site_id == k0) & (data.datetime < pd.to_datetime(v))
+        data.loc[idx, 'exclude_for_noise'] = True
+
+    lims = {
+        'l36_0089': '2015-01-01',
+    }
+    for k0, v in lims.items():
+        idx = (data.site_id == k0) & (data.datetime > pd.to_datetime(v))
+        data.loc[idx, 'exclude_for_noise'] = True
+
+
+def _plot_wierdi():
+    data = get_all_n_data(True)
+    sites = [
+        'm36_3588',
+        'm36_3683',
+        'm36_4227',
+        'l36_2122',
+    ]
+    for site in sites:
+        tdata = data[data['site_id'] == site]
+        fig, ax = plt.subplots()
+        ax.scatter(tdata['datetime'], tdata['n_conc'], c=tdata['isite_id'])
+        ax.set_title(site)
+    plt.show()
+
+
+def plot_outlier_managment(metadata, outdir):
+    from kendall_stats import MannKendall
+
+    outdir.mkdir(exist_ok=True, parents=True)
+    ndata = get_all_n_data()
+    for site in metadata.index:
+        site_type = ndata.loc[ndata['site_id'] == site, 'type'].unique()[0]
+        all_data = ndata[ndata['site_id'] == site].set_index('datetime')
+        exclude_mk_idx = ~(all_data['exclude_for_noise'] | all_data['always_exclude'])
+
+        t = MannKendall(all_data.loc[exclude_mk_idx, 'n_conc'])
+        fig, ax = plt.subplots(figsize=(14, 8))
+        fig, ax, (handles, labels) = t.plot_data(color='b', ax=ax)
+        idx = all_data['exclude_for_noise']
+        sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='r', label='exclude_for_noise')
+        handles.append(sc)
+        labels.append('exclude_for_noise')
+        idx = all_data['always_exclude']
+        sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='k', label='always_exclude')
+        handles.append(sc)
+        labels.append('always_exclude')
+
+        mdist = metadata.loc[site, 'age_dist']
+        if mdist == 0:
+            lag_key = 'lag_at_site'
+        else:
+            lag_key = f'lag_within_{mdist}m_+-_{metadata.loc[site, "age_depth"]}m_depth'
+
+        ax.set_title(
+            f'{site_type} {site}, depth={metadata.loc[site, "depth"]:.0f}m'
+            f'mrt={metadata.loc[site, "age_mean"]:.2f} yr\n'
+            f'mk={metadata.loc[site, "mk_trend"]}, p={metadata.loc[site, "mk_p"]:.2f}\n'
+            f'noise={metadata.loc[site, "noise"]:.2f} mg/L, '
+            f'slope={metadata.loc[site, "slope_yr"]:.2f} mg/L/yr, '
+            f'2008-2012 concentration={metadata.loc[site, "conc_2010"]:.2f} mg/L')
+        ax.legend(handles, labels)
+        fig.savefig(outdir.joinpath(f'{site}.png'))
+        plt.close(fig)
+
+
+def get_all_n_data(recalc=False, duplicate_strs=True):
+    save_path = generated_data_dir.joinpath('all_n_data.hdf')
     if not save_path.exists() or recalc:
         raw_data = pd.read_excel(
             proj_root.joinpath(
@@ -104,53 +270,41 @@ def get_all_n_data(recalc=False):
         outdata = raw_data[['site_id', 'type', 'datetime', 'nztmx', 'nztmy', 'depth', 'n_conc']].dropna()
 
         # pair wells (from lisa scott)
-        out_paired = get_paired_wells()
-        outdata['isite_id'] = outdata['site_id'].replace({k: i for i, k in enumerate(outdata['site_id'].unique())})
+        out_paired = _get_paired_wells()
+        outdata['isite_id'] = outdata['site_id'].replace({k0: i for i, k0 in enumerate(outdata['site_id'].unique())})
         outdata['site_id'] = outdata['site_id'].replace(out_paired)
-        assert not any(np.in1d(outdata['site_id'], out_paired.keys()))
+        assert not any(np.in1d(outdata['site_id'], list(out_paired.keys())))
 
         # keynote adjust step change from matched sites offset visually
         outdata.loc[outdata['isite_id'] == 27, 'n_conc'] += -0.6
-        add_manual_outlier(outdata)
-        outlier_id_lof(outdata)
+        _add_manual_outlier(outdata)
+        _outlier_id_lof(outdata)
+
+        # flip to sw names
+        for k0, v in sw_name_mapper.items():
+            idx = outdata['site_id'] == k0
+            assert idx.sum() > 0
+            outdata.loc[idx, 'site_id'] = v
         outdata.to_hdf(save_path, 'ndata', complib='zlib', complevel=9)
     else:
         outdata = pd.read_hdf(save_path, 'ndata')
+    if duplicate_strs:
+        all_outdata = [outdata]
+        for site in outdata.loc[outdata['type'] == 'stream', 'site_id'].unique():
+            for age in sw_ages:
+                temp = outdata.loc[outdata['site_id'] == site].copy()
+                temp['site_id'] = temp['site_id'] + f' mrt-{age}'
+                all_outdata.append(temp)
+        outdata = pd.concat(all_outdata)
 
     return outdata
 
 
-def outlier_id_lof(ndata, contaminations=None):
-    if contaminations is None:
-        contaminations = ['auto']
-    assert isinstance(ndata, pd.DataFrame)
-    refs = ndata['site_id'].unique()
-    for ref in refs:
-        idx = ndata['site_id'] == ref
-        if idx.sum() < 5:
-            continue
-        X = ndata.loc[idx, ['datetime', 'n_conc']]
-        X.loc[:, 'datetime'] = (X.datetime - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
-        X = X.values
-
-        # normalize data
-        X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
-
-        assert np.isnan(X).sum() == 0
-        for cont in contaminations:
-            clf = LocalOutlierFactor(contamination=cont, n_jobs=1)
-            y_pred = clf.fit_predict(X)
-            ndata.loc[idx, f'unsup_outlier_{cont}'] = y_pred < 0
-
-    return ndata
-
-
 def get_n_metadata(recalc=False):
-    save_path = unbacked_dir.joinpath('all_n_metadata.hdf')
+    save_path = generated_data_dir.joinpath('all_n_metadata.hdf')
     if not save_path.exists() or recalc:
-        ndata = get_all_n_data(recalc=recalc)
+        ndata = get_all_n_data(recalc=recalc, duplicate_strs=False)
         ngroup = ndata.groupby('site_id')
-        ['min', 'max', 'mean', 'std', 'count']
         outdata = pd.DataFrame()
         outdata['ncount'] = ngroup['n_conc'].count()
         outdata['nmean'] = ngroup['n_conc'].mean()
@@ -169,7 +323,7 @@ def get_n_metadata(recalc=False):
         outdata['samples_per_year_mean'] = outdata['ncount'] / outdata['years_sampled']
         nztmx = ngroup['nztmx'].nunique()
         nztmy = ngroup['nztmy'].nunique()
-        paired = get_paired_wells()
+        paired = _get_paired_wells()
         assert ((nztmx == 1) | (nztmx.index.isin(paired.values()))).all()
         assert ((nztmy == 1) | (nztmy.index.isin(paired.values()))).all()
         outdata['nztmx'] = ngroup['nztmx'].mean()
@@ -227,12 +381,13 @@ def get_n_metadata(recalc=False):
             'l35_0910': (60, 'from nearby deep wells (100m rather than 200m)'),
             'm36_0271': (25, 'from manual interpretation')
         }
-        for k, (age, comment) in manual_age_changes.items():
-            outdata.loc[k, 'age_mean'] = age
-            outdata.loc[k, 'age_median'] = age
-            outdata.loc[k, 'age_comment'] = comment
+        for k0, (age, comment) in manual_age_changes.items():
+            outdata.loc[k0, 'age_mean'] = age
+            outdata.loc[k0, 'age_median'] = age
+            outdata.loc[k0, 'age_comment'] = comment
 
         sw_sites = outdata['type'] == 'stream'
+
         outdata.loc[sw_sites, 'age_mean'] = np.nan
 
         filter_idx = (
@@ -247,9 +402,11 @@ def get_n_metadata(recalc=False):
         outdata['keep0'] = filter_idx
 
         # add in lisa data
-        lisa_data = pd.read_csv(proj_root.joinpath('original_data/n_metadata_lisa.csv'), index_col=0)
+        lisa_data = pd.read_csv(proj_root.joinpath('original_data/n_metadata_lisa.csv'))
+        lisa_data['site_id'] = lisa_data['site_id'].replace(sw_name_mapper)
+        lisa_data.set_index('site_id', inplace=True)
         lisa_data['LS_keep'] = lisa_data['LS_keep'] != 'FALSE'
-        out_paired = get_paired_wells()
+        out_paired = _get_paired_wells()
         idx = lisa_data.index[lisa_data.index.isin(outdata.index)]
         outdata.loc[idx, 'lisa_keep'] = lisa_data.loc[idx, 'LS_keep']
         outdata['Lisa_Comment'] = ''
@@ -271,15 +428,29 @@ def get_n_metadata(recalc=False):
 
         outdata['lisa_keep'] = outdata['lisa_keep'].astype(bool)
         outdata['final_keep'] = outdata['lisa_keep']
+
+        # all sw sites at differnet ages: [5, 10, 20, 30]
+        idx = outdata['type'] == 'stream'
+        sw_data_org = outdata.loc[idx]
+        outdata = [outdata.loc[~idx]]
+        for age in sw_ages:
+            sw_data = sw_data_org.copy()
+            sw_data.index = sw_data.index + f' mrt-{age}'
+            sw_data.loc[:, 'age_mean'] = age
+            sw_data.loc[:, 'age_median'] = age
+            sw_data.loc[:, 'age_comment'] = f'sw age {age}'
+            outdata.append(sw_data)
+
+        outdata = pd.concat(outdata)
+
+        # add noise
+        _generate_noise_data(outdata)
+
         outdata.to_hdf(save_path, 'nmetadata', complib='zlib', complevel=9)
     else:
         outdata = pd.read_hdf(save_path, 'nmetadata')
-
+    assert isinstance(outdata, pd.DataFrame)
     return outdata
-
-
-def get_outlier_free_ndata(recalc=False):
-    ndata = get_all_n_data(recalc=recalc)
 
 
 def plot_from_metadata(metadata, outdir):
@@ -289,7 +460,7 @@ def plot_from_metadata(metadata, outdir):
     for site in metadata.index:
         site_type = ndata.loc[ndata['site_id'] == site, 'type'].unique()[0]
         all_data = ndata[ndata['site_id'] == site].set_index('datetime')
-        if len(all_data)<3:
+        if len(all_data) < 3:
             continue
         t = MannKendall(all_data['n_conc'])
         fig, ax, leg_data = t.plot_data()
@@ -308,118 +479,6 @@ def plot_from_metadata(metadata, outdir):
         plt.close(fig)
 
 
-def add_manual_outlier(data):
-    data['exclude_for_noise'] = False
-    data['always_exclude'] = False
-
-    # keep greater than
-    lims = {
-        'l35_0171': 1.75,
-        'm36_5248': 4,
-        'm36_7734': 3,
-        'm36_8187': 4,
-        'l36_0584': 6,
-        "m36_3683": 1,
-    }
-    for k, v in lims.items():
-        idx = (data.site_id == k) & (data.n_conc < v)
-        data.loc[idx, 'always_exclude'] = True
-
-    # keep less than
-    lims = {
-        'l36_0059': 3.5,
-        'l36_0682': 12,
-        'l36_0725': 7,
-        'l36_0871': 9.5,
-        'm36_8187': 11.5,
-        'm36_0456': 11,
-        'l35_0190': 11,
-        'l35_0205': 9,
-        'l35_0596': 12,
-    }
-    for k, v in lims.items():
-        idx = (data.site_id == k) & (data.n_conc > v)
-        data.loc[idx, 'always_exclude'] = True
-
-    # time management
-    lims = {
-        'l36_0121': '2008-02-01',
-        'l35_0009': '2014-01-01',
-        'l36_0477': '2000-01-01',
-        'm36_0698': '1996-01-01',
-        'm36_5248': '2008-01-01',
-        "m36_3683": '1997-01-01',
-        'l36_2122': '2006-01-01',
-        'm36_8187': '2006-01-01',
-    }
-    for k, v in lims.items():
-        idx = (data.site_id == k) & (data.datetime < pd.to_datetime(v))
-        data.loc[idx, 'exclude_for_noise'] = True
-
-    lims = {
-        'l36_0089': '2015-01-01',
-    }
-    for k, v in lims.items():
-        idx = (data.site_id == k) & (data.datetime > pd.to_datetime(v))
-        data.loc[idx, 'exclude_for_noise'] = True
-
-
-def plot_wierdi():
-    data = get_all_n_data(True)
-    sites = [
-        'm36_3588',
-        'm36_3683',
-        'm36_4227',
-        'l36_2122',
-    ]
-    for site in sites:
-        tdata = data[data['site_id'] == site]
-        fig, ax = plt.subplots()
-        ax.scatter(tdata['datetime'], tdata['n_conc'], c=tdata['isite_id'])
-        ax.set_title(site)
-    plt.show()
-
-
-def plot_outlier_managment(metadata, outdir):
-    from kendall_stats import MannKendall
-
-    outdir.mkdir(exist_ok=True, parents=True)
-    ndata = get_all_n_data()
-    for site in metadata.index:
-        site_type = ndata.loc[ndata['site_id'] == site, 'type'].unique()[0]
-        all_data = ndata[ndata['site_id'] == site].set_index('datetime')
-        exclude_mk_idx = ~(all_data['exclude_for_noise'] | all_data['always_exclude'])
-
-        t = MannKendall(all_data.loc[exclude_mk_idx, 'n_conc'])
-        fig, ax = plt.subplots(figsize=(14, 8))
-        fig, ax, (handles, labels) = t.plot_data(color='b', ax=ax)
-        idx = all_data['exclude_for_noise']
-        sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='r', label='exclude_for_noise')
-        handles.append(sc)
-        labels.append('exclude_for_noise')
-        idx = all_data['always_exclude']
-        sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='k', label='always_exclude')
-        handles.append(sc)
-        labels.append('always_exclude')
-
-        mdist = metadata.loc[site, 'age_dist']
-        if mdist == 0:
-            lag_key = 'lag_at_site'
-        else:
-            lag_key = f'lag_within_{mdist}m_+-_{metadata.loc[site, "age_depth"]}m_depth'
-
-        ax.set_title(f'{site_type} {site}, depth={metadata.loc[site, "depth"]:.0f}m\n'
-                     f'{lag_key}\n'
-                     f'mrt={metadata.loc[site, "age_mean"]:.2f} years\n'
-                     f'mk={metadata.loc[site, "mk_trend"]}, p={metadata.loc[site, "mk_p"]:.2f}')
-        ax.legend(handles, labels)
-        fig.savefig(outdir.joinpath(f'{site}.png'))
-        plt.close(fig)
-
-
-# todo look at streams in context of flow if possible
-# todo all sw sites at differnet ages: [5, 10, 20, 30]
-
 if __name__ == '__main__':
     #  plot_wierdi() manually handled
     meta = get_n_metadata(True)
@@ -427,7 +486,4 @@ if __name__ == '__main__':
               'lisa_keep', 'Lisa_Comment_bool', 'keep0|lisa', '~keep0&lisa']:
         print(k, meta[k].sum())
     meta.to_csv(unbacked_dir.joinpath('n_metadata.csv'))
-    age_data = get_final_age_data()
-    age_data.to_csv(unbacked_dir.joinpath('n_age_data.csv'))
-    plot_outlier_managment(meta.loc[meta['lisa_keep']], unbacked_dir.joinpath('n_plots_use_meta'))
-    plot_from_metadata(meta.loc[~meta['lisa_keep']], unbacked_dir.joinpath('n_plots_exclude_meta'))
+    plot_outlier_managment(meta.loc[meta['final_keep']], unbacked_dir.joinpath('final_n_plots'))
