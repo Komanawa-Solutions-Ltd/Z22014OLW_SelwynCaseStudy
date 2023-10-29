@@ -31,8 +31,20 @@ def get_site_source_conc(site, recalc=False):
     f_p1 = metadata['f_p1']
     f_p2 = metadata['f_p1']
     prev_slope = metadata['slope_yr']
-    min_conc = min(metadata['nmin'], 1)
+    min_conc = min(metadata['nmin'], 0.5)
     max_conc = max(metadata['nmax'], 20)
+
+    if site in ['l36_1313', 'l36_2094', 'l36_2122']:
+        min_conc = 0.01
+
+        if site == 'l36_1313':
+            p0 = [0.1, 7.0]
+        elif site == 'l36_2094':
+            p0 = [0.075, 10.0]
+        elif site == 'l36_2122':
+            p0 = [0.05, 10.0]
+    else:
+        p0 = None
 
     if np.isclose(prev_slope, 0):
         mrt, mrt_p2 = check_age_inputs(mrt, mrt_p1, mrt_p2, frac_p1, precision, f_p1, f_p2)
@@ -40,7 +52,7 @@ def get_site_source_conc(site, recalc=False):
         hist = pd.Series(index=ages * -1, data=init_conc)
     else:
         hist = predict_historical_source_conc(init_conc, mrt, mrt_p1, mrt_p2, frac_p1, f_p1, f_p2, prev_slope, max_conc,
-                                              min_conc, start_age=np.nan, precision=precision)
+                                              min_conc, start_age=np.nan, precision=precision, p0=p0)
         hist.to_hdf(save_path, key=site, complib='zlib', complevel=9)
     return hist
 
@@ -88,42 +100,59 @@ def recalc_all_sites(recalc=False):
         get_site_true_recept_conc(site, recalc=recalc)
 
 
-def plot_all_sites():  # todo
-    save_dir = unbacked_dir.joinpath('true_conc_plots')
-    save_dir.mkdir(exist_ok=True)
+def plot_single_site_source_recept(site):
     ndata = get_all_n_data()
     metadata = get_n_metadata()
+    fig, ax, handles, labels = plot_single_site(site, ndata, metadata)
+    source = get_site_source_conc(site)
+    source.loc[10] = source.loc[0] * (1 - reduction)
+    source.loc[100] = source.loc[0] * (1 - reduction)
+    source = source.loc[source.index >= -20].sort_index()
+    receptor = get_site_true_recept_conc(site)
+    t = ax.plot(
+        pd.to_datetime('2010-01-01') + pd.to_timedelta(source.index.values * 365.25, unit='day'),
+        source,
+        color='gold', ls='--', label='Source')
+    handles.append(t[0])
+    labels.append('Source')
+    t = ax.plot(
+        pd.to_datetime('2010-01-01') + pd.to_timedelta(receptor.index.values * 365.25, unit='day'),
+        receptor, color='orange', label='Modelled Receptor')
+    handles.append(t[0])
+    labels.append('Receptor')
+    ax.axvline(pd.to_datetime('2010-01-01'), ls=':', color='k', alpha=0.5)
+    ax.legend(handles, labels, loc='upper right')
+    return fig, ax, handles, labels
+
+
+def plot_all_sites():
+    save_dir = unbacked_dir.joinpath('true_conc_plots')
+    save_dir.mkdir(exist_ok=True)
     for site in get_final_sites():
-        fig, ax, handles, labels = plot_single_site(site, ndata, metadata)
-        source = get_site_source_conc(site)
-        source.loc[10] = source.loc[0] * (1 - reduction)
-        source.loc[100] = source.loc[0] * (1 - reduction)
-        source = source.loc[source.index >= -20].sort_index()
-        receptor = get_site_true_recept_conc(site)
-        t = ax.plot(
-            pd.to_datetime('2010-01-01') + pd.to_timedelta(source.index.values * 365.25, unit='day'),
-            source,
-            color='gold', ls='--', label='Source')
-        handles.append(t[0])
-        labels.append('Source')
-        t = ax.plot(
-            pd.to_datetime('2010-01-01') + pd.to_timedelta(receptor.index.values * 365.25, unit='day'),
-            receptor, color='orange', label='Modelled Receptor')
-        handles.append(t[0])
-        labels.append('Receptor')
-        ax.axvline(pd.to_datetime('2010-01-01'), ls=':', color='k', alpha=0.5)
-        ax.legend(handles, labels, loc='upper right')
+        fig, ax, handles, labels = plot_single_site_source_recept(site)
         fig.tight_layout()
         fig.savefig(save_dir.joinpath(f'{site}_true_conc.png'))
         plt.close(fig)
 
+
+def plot_fix_sites():
+    # fixed
+    sites = ['l36_0089', 'l36_1313', 'l36_2094', 'l36_2122', 'm36_0297']
+    for site in sites:
+        fig, ax, handles, labels = plot_single_site_source_recept(site)
+        fig.tight_layout()
+        plt.show()
+
+
+def recalc_problem_sites():
+    # fixed
+    sites = ['l36_1313', 'l36_2094', 'l36_2122']
+    for site in sites:
+        print(site)
+        get_site_source_conc(site, recalc=True)
+        get_site_true_recept_conc(site, recalc=True)
+
+
 if __name__ == '__main__':
-    plot_all_sites() # todo manually review these sites
-
-    # todo manually follow up with:
-    #  l36_0089
-    #  l36_1313
-    #  l36_2094
-    #  l36_2122
-    #  m36_0297
-
+    # recalc_all_sites(True)
+    plot_all_sites()

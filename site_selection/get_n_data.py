@@ -95,16 +95,9 @@ def _generate_noise_data(metadata):
     for site in metadata.index:
         site_ndata = ndata.loc[ndata['site_id'] == site]
         trend = metadata.loc[site, 'mk_trend']
-        temp = site_ndata.loc[
-            (site_ndata['datetime'] >= pd.Timestamp('2008-01-01'))
-            & (site_ndata['datetime'] <= pd.Timestamp('2012-01-01')), 'n_conc'].median()
-
-        if pd.isna(temp):
-            if trend <= 0:
-                temp = site_ndata['n_conc'].median()
-        metadata.loc[site, 'conc_2010'] = temp
 
         if trend <= 0:
+            metadata.loc[site, 'conc_2010'] = site_ndata['n_conc'].median()
             metadata.loc[site, 'noise'] = metadata.loc[site, 'nstd']
             metadata.loc[site, 'slope_yr'] = 0
             metadata.loc[site, 'intercept'] = np.nan
@@ -120,6 +113,10 @@ def _generate_noise_data(metadata):
             metadata.loc[site, 'slope_yr'] = senslope
             metadata.loc[site, 'intercept'] = senintercept
             metadata.loc[site, 'noise'] = site_ndata['resid'].std()
+
+            dt_2010 = (pd.to_datetime('2010-01-01') - site_ndata['datetime'].min()).days / 365.25
+            metadata.loc[site, 'conc_2010'] = senslope * dt_2010 + senintercept
+
 
 def _manage_manual_age(metadata):
     # KEYNOTE manual ages
@@ -191,11 +188,15 @@ def _add_manual_outlier(data):
         data.loc[idx, 'exclude_for_noise'] = True
 
     lims = {
-        'l36_0089': '2015-01-01',
+
     }
     for k0, v in lims.items():
         idx = (data.site_id == k0) & (data.datetime > pd.to_datetime(v))
         data.loc[idx, 'exclude_for_noise'] = True
+
+    site = 'l36_0089'
+    idx = (data.site_id == site) & (data.datetime > pd.to_datetime('2015-01-01')) & (data.n_conc < 9.15)
+    data.loc[idx, 'always_exclude'] = True
 
 
 def _plot_wierdi():  # manually handled
