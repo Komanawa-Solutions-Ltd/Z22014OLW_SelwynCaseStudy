@@ -143,10 +143,10 @@ def get_no_trend_detection_power(recalc=False):  # todo run then check
     dpc_notrend = DetectionPowerCalculator(significance_mode='mann-kendall',
                                            nsims=1000,
                                            min_p_value=0.05,
-                                           min_samples=10,
+                                           min_samples=5,
                                            expect_slope=-1,
                                            efficent_mode=True,
-                                           ncores=None, print_freq=50)
+                                           ncores=None, print_freq=200)
 
     metadata, true_conc_ts_vals = make_no_trend_meta_data()
 
@@ -176,11 +176,11 @@ def get_trend_detection_power(recalc=False):  # todo run then check
     print('running: get_trend_detection_power')
     dpc_trend = DetectionPowerCalculator(significance_mode='n-section-mann-kendall',
                                          nsims=1000,
-                                         min_p_value=0.05, min_samples=10,
+                                         min_p_value=0.05, min_samples=5,
                                          expect_slope=(1, -1), nparts=2, min_part_size=5,
                                          no_trend_alpha=0.50, nsims_pettit=2000, efficent_mode=True,
                                          mpmk_check_step=1, mpmk_efficent_min=10, mpmk_window=0.03,
-                                         ncores=None, print_freq=50)
+                                         ncores=None, print_freq=200)
 
     metadata, true_conc_ts_vals = make_trend_meta_data()
 
@@ -211,10 +211,10 @@ def get_no_trend_detection_power_no_noise(recalc=False):  # todo run then check
     dpc_notrend = DetectionPowerCalculator(significance_mode='mann-kendall',
                                            nsims=1,
                                            min_p_value=0.05,
-                                           min_samples=10,
+                                           min_samples=5,
                                            expect_slope=-1,
                                            efficent_mode=True,
-                                           ncores=None, print_freq=50)
+                                           ncores=None, print_freq=200)
     metadata, true_conc_ts_vals = make_no_trend_meta_data()
 
     data = dpc_notrend.mulitprocess_power_calcs(
@@ -244,11 +244,11 @@ def get_trend_detection_power_no_noise(recalc=False):  # todo run then check
     print('running: get_trend_detection_power_no_noise')
     dpc_trend = DetectionPowerCalculator(significance_mode='n-section-mann-kendall',
                                          nsims=1,
-                                         min_p_value=0.05, min_samples=10,
+                                         min_p_value=0.05, min_samples=5,
                                          expect_slope=(1, -1), nparts=2, min_part_size=5,
                                          no_trend_alpha=0.50, nsims_pettit=2000, efficent_mode=True,
                                          mpmk_check_step=1, mpmk_efficent_min=10, mpmk_window=0.03,
-                                         ncores=None, print_freq=50)
+                                         ncores=None, print_freq=200)
     metadata, true_conc_ts_vals = make_trend_meta_data()
 
     data = dpc_trend.mulitprocess_power_calcs(
@@ -270,9 +270,17 @@ def get_trend_detection_power_no_noise(recalc=False):  # todo run then check
     return data
 
 
+def make_check_all_detection_powers(recalc=False):
+    funcs = [get_no_trend_detection_power,
+             get_trend_detection_power,
+             get_no_trend_detection_power_no_noise,
+             get_trend_detection_power_no_noise]
+    for func in funcs:
+        print(f'running: {func.__name__}')
+        t = func(recalc=recalc)
+        assert t.python_error.notna().sum() == 0, f'python error for {func.__name__}'
+
+
 test_dcp = False
 if __name__ == '__main__':
-    get_no_trend_detection_power()
-    get_trend_detection_power()
-    get_no_trend_detection_power_no_noise()
-    get_trend_detection_power_no_noise()
+    make_check_all_detection_powers(False)
