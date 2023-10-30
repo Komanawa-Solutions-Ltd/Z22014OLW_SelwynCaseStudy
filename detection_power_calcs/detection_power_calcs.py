@@ -49,12 +49,8 @@ def make_trend_meta_data():
 
         # get true conc
         for site in use_sites:
-            true_conc = get_site_true_recept_conc(site)
-            locs = np.arange(0, samp_dur + samp_freq, samp_freq)
-            true_conc = pd.concat((true_conc, pd.Series(index=locs, data=np.nan)))
-            true_conc = true_conc.loc[~true_conc.index.duplicated(keep='first')]
-            true_conc = true_conc.interpolate(method='index')
-            out_use_conc.append(true_conc.loc[locs])
+            temp = make_true_conc(site, samp_freq=samp_freq, samp_dur=samp_dur)
+            out_use_conc.append(temp)
 
     outdata = pd.DataFrame(index=idvs, data={'site': site_names,
                                              'noise': error_vals,
@@ -73,6 +69,19 @@ def make_trend_meta_data():
     assert len(outdata.site.unique()) == len(use_sites)
     assert len(out_use_conc) == len(outdata)
     return outdata, out_use_conc
+
+
+def make_true_conc(site, samp_freq, samp_dur):
+    true_conc = get_site_true_recept_conc(site)
+    locs = np.arange(0, samp_dur + 1 / samp_freq, 1 / samp_freq)
+    true_conc = pd.concat((true_conc, pd.Series(index=locs, data=np.nan)))
+    true_conc = true_conc.loc[~true_conc.index.duplicated(keep='first')]
+    true_conc = true_conc.interpolate(method='index')
+    temp = true_conc.loc[locs]
+    if (len(temp) - (samp_dur * samp_freq + 1)) == 1:
+        temp = temp.iloc[:-1]
+    assert len(temp) == samp_dur * samp_freq + 1
+    return temp
 
 
 def make_no_trend_meta_data():
@@ -109,12 +118,8 @@ def make_no_trend_meta_data():
 
         # get true conc
         for site in use_sites:
-            true_conc = get_site_true_recept_conc(site)
-            locs = np.arange(0, samp_dur + samp_freq, samp_freq)
-            true_conc = pd.concat((true_conc, pd.Series(index=locs, data=np.nan)))
-            true_conc = true_conc.loc[~true_conc.index.duplicated(keep='first')]
-            true_conc = true_conc.interpolate(method='index')
-            out_use_conc.append(true_conc.loc[locs])
+            temp = make_true_conc(site, samp_freq=samp_freq, samp_dur=samp_dur)
+            out_use_conc.append(temp)
 
     outdata = pd.DataFrame(index=idvs, data={'site': site_names,
                                              'noise': error_vals,
@@ -275,12 +280,16 @@ def make_check_all_detection_powers(recalc=False):
              get_trend_detection_power,
              get_no_trend_detection_power_no_noise,
              get_trend_detection_power_no_noise]
+    out = {}
     for func in funcs:
         print(f'running: {func.__name__}')
         t = func(recalc=recalc)
-        assert t.python_error.notna().sum() == 0, f'python error for {func.__name__}'
+        out[func.__name__] = t
+
+    for k, v in out.items():
+        assert v.python_error.notna().sum() == 0, f'python error for {k}'
 
 
 test_dcp = False
 if __name__ == '__main__':
-    make_check_all_detection_powers(False)
+    make_check_all_detection_powers(True)
