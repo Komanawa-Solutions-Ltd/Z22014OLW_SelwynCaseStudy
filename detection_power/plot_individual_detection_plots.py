@@ -15,8 +15,6 @@ from generate_true_concentration.gen_true_slope_init_conc import plot_single_sit
 
 
 def plot_single_site_detection_power(site):
-    # todo integrate plataue power when finished
-    # todo integrate no_noise powers when finished
     fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, figsize=(14, 10), gridspec_kw={'width_ratios': (1, 0.1)}
                             )
     conc_ax = axs[0, 0]
@@ -37,10 +35,22 @@ def plot_single_site_detection_power(site):
     conc_ax.set_title('')
     conc_ax.set_ylabel('Concentration (mg/L)')
 
+    # todo integrate plataue power when finished
     detect_noisy = pd.concat([get_no_trend_detection_power(), get_trend_detection_power()])
     detect_noisy = detect_noisy.loc[detect_noisy.site == site]
 
+    # todo integrate plataue power when finished
+    detect_not_noisy = pd.concat([get_trend_detection_power_no_noise(), get_no_trend_detection_power_no_noise()])
+    detect_not_noisy = detect_not_noisy.loc[detect_not_noisy.site == site]
+
     use_samp_durs = pd.to_datetime('2010-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
+
+    # plot noise free detection power
+    freq = max(samp_freqs)
+    plt_data = [detect_not_noisy.loc[f'{site}_{d}_{freq}', 'power'] for d in samp_durs]
+
+    power_ax.plot(use_samp_durs, plt_data, marker='o', label=f'Noise free detection', c='k', alpha=0.5)
+
     # plot detection power
     colors = ['firebrick', 'orange', 'royalblue', 'purple']
     for i, (freq, c) in enumerate(zip(samp_freqs, colors)):
@@ -63,6 +73,7 @@ def plot_single_site_detection_power(site):
     fig.supxlabel('Time (years)')
     return fig
 
+
 def plot_single_site_no_noise_power(site):
     fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, figsize=(14, 10), gridspec_kw={'width_ratios': (1, 0.1)}
                             )
@@ -84,6 +95,7 @@ def plot_single_site_no_noise_power(site):
     conc_ax.set_title('')
     conc_ax.set_ylabel('Concentration (mg/L)')
 
+    # todo integrate plataue power when finished
     detect_not_noisy = pd.concat([get_no_trend_detection_power_no_noise(), get_trend_detection_power_no_noise()])
     detect_not_noisy = detect_not_noisy.loc[detect_not_noisy.site == site]
 
@@ -111,7 +123,7 @@ def plot_single_site_no_noise_power(site):
     return fig
 
 
-def _plot_all_no_noise(outdir): # todo re-run and review
+def _plot_all_no_noise(outdir):  # todo re-run and review
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
     for site in get_final_sites():
@@ -121,6 +133,7 @@ def _plot_all_no_noise(outdir): # todo re-run and review
         fig.savefig(outdir.joinpath(f'{site}.png'))
         plt.close()
 
+
 def plot_all(outdir):
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
@@ -128,17 +141,17 @@ def plot_all(outdir):
         print(site)
         fig = plot_single_site_detection_power(site)
         fig.tight_layout()
+        plt.show()
         fig.savefig(outdir.joinpath(f'{site}.png'))
         plt.close()
+
 
 # todo for wells --> plot percentage of sites with {10+, 25+, 50+ 75+ 90+} (one plot each?) chance of detecting change
 #  vs time and colored by samp_freq; EXCLUDE all zero chance wells
 # todo for streams detection power vs MRT assumed different plots for different sampling frequencies v time
-# todo percentage of wells with no chance of detecing change (e.g. a platoing of info)... should I re-run these sites with a different expect trend?
-#  or should I include a paired ttest option for with/without intervention?.. too hard
-
+# todo write up plataue sites
 
 
 if __name__ == '__main__':
-    #already run plot_all(unbacked_dir.joinpath('power_calc_site_plots')) # todo re-run when updated
-    _plot_all_no_noise(unbacked_dir.joinpath('noise_free_power_sites'))
+    plot_all(unbacked_dir.joinpath('power_calc_site_plots')) # todo re-run when updated
+    pass
