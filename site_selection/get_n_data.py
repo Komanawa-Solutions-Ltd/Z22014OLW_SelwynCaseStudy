@@ -215,7 +215,7 @@ def _plot_wierdi():  # manually handled
     plt.show()
 
 
-def plot_single_site(site, ndata, metadata):
+def plot_single_site(site, ndata, metadata, ax=None):
     """
     plot a single site
     :param site: site id
@@ -228,7 +228,11 @@ def plot_single_site(site, ndata, metadata):
     exclude_mk_idx = ~(all_data['exclude_for_noise'] | all_data['always_exclude'])
 
     t = MannKendall(all_data.loc[exclude_mk_idx, 'n_conc'])
-    fig, ax = plt.subplots(figsize=(14, 8))
+    if ax is not None:
+        assert isinstance(ax, plt.Axes)
+        fig = ax.figure
+    else:
+        fig, ax = plt.subplots(figsize=(14, 8))
     fig, ax, (handles, labels) = t.plot_data(color='b', ax=ax)
     idx = all_data['exclude_for_noise']
     sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='r', label='exclude_for_noise')
@@ -248,10 +252,10 @@ def plot_single_site(site, ndata, metadata):
         lag_key = f'MRT inferred: median within {mdist}m +- {metadata.loc[site, "age_depth"]}m depth'
 
     ax.set_title(
-        f'{site_type} {site}, depth={metadata.loc[site, "depth"]:.0f}m '
-        f'mrt={metadata.loc[site, "age_mean"]:.2f} yr\n'
-        f'mk={metadata.loc[site, "mk_trend"]}, p={metadata.loc[site, "mk_p"]:.2f}\n'
-        f'lag={lag_key}\n'
+        f'{site_type.capitalize()} {site}\n'
+        f'depth={metadata.loc[site, "depth"]:.0f}m, '
+        f'trend={MannKendall.map_trend(metadata.loc[site, "mk_trend"])}, p={metadata.loc[site, "mk_p"]:.2f}\n'
+        f'lag={metadata.loc[site, "age_mean"]:.2f} yr {lag_key}\n'
         f'noise={metadata.loc[site, "noise"]:.2f} mg/L, '
         f'slope={metadata.loc[site, "slope_yr"]:.2f} mg/L/yr, '
         f'2008-2012 concentration={metadata.loc[site, "conc_2010"]:.2f} mg/L')

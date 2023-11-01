@@ -87,6 +87,37 @@ def get_site_true_recept_conc(site, recalc=False):
     receptor_conc.to_hdf(save_path, key=site, complib='zlib', complevel=9)
 
 
+def get_site_true_recept_conc_no_change(site, recalc=False):
+    save_path = generated_data_dir.joinpath('true_receptor_conc_slope_init_no_change.hdf')
+    if save_path.exists() and not recalc:
+        try:
+            return pd.read_hdf(save_path, key=site)
+        except KeyError:
+            pass
+    hist = get_site_source_conc(site)
+    metadata = get_n_metadata().loc[site]
+    init_conc = metadata['conc_2010']
+    mrt = metadata['age_mean']
+    mrt_p1 = metadata['age_mean']
+    mrt_p2 = metadata['age_mean']
+    frac_p1 = metadata['frac_1']
+    assert np.isclose(frac_p1, 1)
+    f_p1 = metadata['f_p1']
+    f_p2 = metadata['f_p1']
+    prev_slope = metadata['slope_yr']
+    min_conc = min(metadata['nmin'], 1)
+    max_conc = max(metadata['nmax'], 20)
+    hist.loc[10] = hist.loc[0]
+    hist.loc[100] = hist.loc[0]
+    receptor_conc = predict_future_conc_bepm(once_and_future_source_conc=hist,
+                                             predict_start=-20, predict_stop=100,
+                                             mrt_p1=mrt_p1, frac_p1=frac_p1, f_p1=f_p1, f_p2=f_p2, mrt=mrt, mrt_p2=None,
+                                             fill_value=min_conc,
+                                             fill_threshold=.5, precision=precision, pred_step=10 ** -precision)
+    receptor_conc.to_hdf(save_path, key=site, complib='zlib', complevel=9)
+    return receptor_conc
+
+
 def recalc_all_sites(recalc=False):
     """
     a convinence function to recalculate all sites
@@ -100,10 +131,10 @@ def recalc_all_sites(recalc=False):
         get_site_true_recept_conc(site, recalc=recalc)
 
 
-def plot_single_site_source_recept(site):
+def plot_single_site_source_recept(site, ax=None):
     ndata = get_all_n_data()
     metadata = get_n_metadata()
-    fig, ax, handles, labels = plot_single_site(site, ndata, metadata)
+    fig, ax, handles, labels = plot_single_site(site, ndata, metadata, ax=ax)
     source = get_site_source_conc(site)
     source.loc[10] = source.loc[0] * (1 - reduction)
     source.loc[100] = source.loc[0] * (1 - reduction)
@@ -119,7 +150,14 @@ def plot_single_site_source_recept(site):
         pd.to_datetime('2010-01-01') + pd.to_timedelta(receptor.index.values * 365.25, unit='day'),
         receptor, color='orange', label='Modelled Receptor')
     handles.append(t[0])
-    labels.append('Receptor')
+    labels.append('Receptor, with reduction')
+
+    no_change_recept = get_site_true_recept_conc_no_change(site)
+    t = ax.plot(pd.to_datetime('2010-01-01') + pd.to_timedelta(no_change_recept.index.values * 365.25, unit='day'),
+                no_change_recept, color='fuchsia', ls=':', label='Receptor, no reduction')
+    handles.append(t[0])
+    labels.append('Receptor, no reduction')
+
     ax.axvline(pd.to_datetime('2010-01-01'), ls=':', color='k', alpha=0.5)
     ax.legend(handles, labels, loc='upper right')
     return fig, ax, handles, labels

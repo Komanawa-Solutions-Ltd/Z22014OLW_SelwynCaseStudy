@@ -140,7 +140,7 @@ def make_no_trend_meta_data():
     return outdata, out_use_conc
 
 
-def get_no_trend_detection_power(recalc=False):  # todo run then check
+def get_no_trend_detection_power(recalc=False):
     save_path = generated_data_dir.joinpath('no_trend_detection_power.hdf')
     if save_path.exists() and not recalc:
         return pd.read_hdf(save_path, key='power')
@@ -151,7 +151,7 @@ def get_no_trend_detection_power(recalc=False):  # todo run then check
                                            min_samples=5,
                                            expect_slope=-1,
                                            efficent_mode=True,
-                                           ncores=None, print_freq=200)
+                                           ncores=ncores, print_freq=200)
 
     metadata, true_conc_ts_vals = make_no_trend_meta_data()
 
@@ -174,7 +174,7 @@ def get_no_trend_detection_power(recalc=False):  # todo run then check
     return data
 
 
-def get_trend_detection_power(recalc=False):  # todo run then check
+def get_trend_detection_power(recalc=False):
     save_path = generated_data_dir.joinpath('trend_detection_power.hdf')
     if save_path.exists() and not recalc:
         return pd.read_hdf(save_path, key='power')
@@ -185,7 +185,7 @@ def get_trend_detection_power(recalc=False):  # todo run then check
                                          expect_slope=(1, -1), nparts=2, min_part_size=5,
                                          no_trend_alpha=0.50, nsims_pettit=2000, efficent_mode=True,
                                          mpmk_check_step=1, mpmk_efficent_min=10, mpmk_window=0.03,
-                                         ncores=None, print_freq=200)
+                                         ncores=ncores, print_freq=200)
 
     metadata, true_conc_ts_vals = make_trend_meta_data()
 
@@ -219,13 +219,13 @@ def get_no_trend_detection_power_no_noise(recalc=False):  # todo run then check
                                            min_samples=5,
                                            expect_slope=-1,
                                            efficent_mode=True,
-                                           ncores=None, print_freq=200)
+                                           ncores=ncores, print_freq=200)
     metadata, true_conc_ts_vals = make_no_trend_meta_data()
 
     data = dpc_notrend.mulitprocess_power_calcs(
         outpath=None,
         id_vals=metadata.index,
-        error_vals=metadata.noise,
+        error_vals=0,
         mrt_model_vals='pass_true_conc',
         true_conc_ts_vals=true_conc_ts_vals,
         seed=65468,
@@ -253,13 +253,13 @@ def get_trend_detection_power_no_noise(recalc=False):  # todo run then check
                                          expect_slope=(1, -1), nparts=2, min_part_size=5,
                                          no_trend_alpha=0.50, nsims_pettit=2000, efficent_mode=True,
                                          mpmk_check_step=1, mpmk_efficent_min=10, mpmk_window=0.03,
-                                         ncores=None, print_freq=200)
+                                         ncores=ncores, print_freq=200)
     metadata, true_conc_ts_vals = make_trend_meta_data()
 
     data = dpc_trend.mulitprocess_power_calcs(
         outpath=None,
         id_vals=metadata.index,
-        error_vals=metadata.noise,
+        error_vals=0,
         mrt_model_vals='pass_true_conc',
         true_conc_ts_vals=true_conc_ts_vals,
         seed=65468,
@@ -276,10 +276,12 @@ def get_trend_detection_power_no_noise(recalc=False):  # todo run then check
 
 
 def make_check_all_detection_powers(recalc=False):
-    funcs = [get_no_trend_detection_power,
-             get_trend_detection_power,
-             get_no_trend_detection_power_no_noise,
-             get_trend_detection_power_no_noise]
+    funcs = [
+        get_no_trend_detection_power_no_noise,
+        get_trend_detection_power_no_noise,
+        # todo DADB get_no_trend_detection_power,
+        # todo DADB get_trend_detection_power,
+    ]
     out = {}
     for func in funcs:
         print(f'running: {func.__name__}')
@@ -287,9 +289,113 @@ def make_check_all_detection_powers(recalc=False):
         out[func.__name__] = t
 
     for k, v in out.items():
-        assert v.python_error.notna().sum() == 0, f'python error for {k}'
+        assert v.python_error.notna().sum() == 0, f'python error for {k}: {v.python_error.unique()}'
+
+
+def get_all_plateau_sites():
+    data = get_trend_detection_power()
+    data = data.groupby('site')['power'].sum()
+    return data.index[np.isclose(data, 0)]
+
+
+def get_plateau_power(recalc=False):
+    save_path = generated_data_dir.joinpath('plateau_detection_power.hdf')
+    if save_path.exists() and not recalc:
+        return pd.read_hdf(save_path, key='power')
+    outdata = []
+    for freq in samp_freqs:
+        print(f'running: get_plateau_power {freq=}')
+        dpc_trend = DetectionPowerCalculator(significance_mode='n-section-mann-kendall',
+                                             nsims=1000,
+                                             min_p_value=0.05, min_samples=10,
+                                             expect_slope=(1, 0), nparts=2, min_part_size=5 * freq,
+                                             no_trend_alpha=0.60, nsims_pettit=2000, efficent_mode=True,
+                                             mpmk_check_step=1, mpmk_efficent_min=10, mpmk_window=0.03,
+                                             ncores=ncores, print_freq=200)
+
+        metadata, use_conc = make_trend_meta_data()
+        use_sites = get_all_plateau_sites()
+        idx = np.in1d(metadata.site, use_sites) & (metadata.samp_per_year == freq)
+        metadata = metadata.loc[idx]
+        use_conc = [e for i, e in zip(idx, use_conc) if i]
+
+        data = dpc_trend.mulitprocess_power_calcs(
+            outpath=None,
+            id_vals=metadata.index,
+            error_vals=metadata.noise,
+            mrt_model_vals='pass_true_conc',
+            true_conc_ts_vals=use_conc,
+            seed=65468,
+            run=not test_dcp
+        )
+        if data is not None:
+            temp = data.loc[:, 'python_error']
+            data = data.dropna(axis=1, how='all')
+            data['python_error'] = temp
+            data = data.merge(metadata, left_index=True, right_index=True)
+            outdata.append(data)
+
+    outdata = pd.concat(outdata)
+    outdata.to_hdf(save_path, key='power', complib='zlib', complevel=9)
+
+    return outdata
+
+
+def get_plateau_power_no_noise(recalc=False):
+    save_path = generated_data_dir.joinpath('Noise_Free_plateau_detection_power.hdf')
+    if save_path.exists() and not recalc:
+        return pd.read_hdf(save_path, key='power')
+    outdata = []
+    for freq in samp_freqs:
+        print(f'running: get_plateau_power {freq=}')
+        dpc_trend = DetectionPowerCalculator(significance_mode='n-section-mann-kendall',
+                                             nsims=1,
+                                             min_p_value=0.05, min_samples=10,
+                                             expect_slope=(1, 0), nparts=2, min_part_size=5 * freq,
+                                             no_trend_alpha=0.60, nsims_pettit=2000, efficent_mode=True,
+                                             mpmk_check_step=1, mpmk_efficent_min=10, mpmk_window=0.03,
+                                             ncores=ncores, print_freq=200)
+
+        metadata, use_conc = make_trend_meta_data()
+        use_sites = get_all_plateau_sites()
+        idx = np.in1d(metadata.site, use_sites) & (metadata.samp_per_year == freq)
+        metadata = metadata.loc[idx]
+        use_conc = [e for i, e in zip(idx, use_conc) if i]
+
+        data = dpc_trend.mulitprocess_power_calcs(
+            outpath=None,
+            id_vals=metadata.index,
+            error_vals=0.0,
+            mrt_model_vals='pass_true_conc',
+            true_conc_ts_vals=use_conc,
+            seed=65468,
+            run=not test_dcp
+        )
+        if data is not None:
+            temp = data.loc[:, 'python_error']
+            data = data.dropna(axis=1, how='all')
+            data['python_error'] = temp
+            data = data.merge(metadata, left_index=True, right_index=True)
+            outdata.append(data)
+
+    outdata = pd.concat(outdata)
+    outdata.to_hdf(save_path, key='power', complib='zlib', complevel=9)
+
+    return outdata
+
+
+def run_check_plateau_power(recalc=False):
+    v = get_plateau_power(recalc=recalc)
+    python_errors = v.python_error.unique()
+    for p in python_errors:
+        print(p)
+        print('\n\n\n\n')
+    assert len(python_errors) == 0, f'{len(python_errors)} unique python errors, see above'
+    pass
 
 
 test_dcp = False
+ncores = 8
 if __name__ == '__main__':
     make_check_all_detection_powers(True)
+    run_check_plateau_power(recalc=True)
