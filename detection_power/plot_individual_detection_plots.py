@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from detection_power.detection_power_calcs import get_trend_detection_power, get_trend_detection_power_no_noise, \
-    get_no_trend_detection_power_no_noise, get_no_trend_detection_power, samp_durs, samp_freqs
+    get_no_trend_detection_power_no_noise, get_no_trend_detection_power, samp_durs, samp_freqs, get_plateau_power, get_all_plateau_sites
 from site_selection.get_n_data import get_n_metadata, get_final_sites
 from generate_true_concentration.gen_true_slope_init_conc import plot_single_site_source_recept
 
@@ -35,21 +35,24 @@ def plot_single_site_detection_power(site):
     conc_ax.set_title('')
     conc_ax.set_ylabel('Concentration (mg/L)')
 
-    # todo integrate plataue power when finished
-    detect_noisy = pd.concat([get_no_trend_detection_power(), get_trend_detection_power()])
-    detect_noisy = detect_noisy.loc[detect_noisy.site == site]
+    if site in get_all_plateau_sites():
+        detect_noisy = get_plateau_power()
+        detect_not_noisy=None
+    else:
+        detect_noisy = pd.concat([get_no_trend_detection_power(), get_trend_detection_power()])
+        detect_noisy = detect_noisy.loc[detect_noisy.site == site]
 
-    # todo integrate plataue power when finished
-    detect_not_noisy = pd.concat([get_trend_detection_power_no_noise(), get_no_trend_detection_power_no_noise()])
-    detect_not_noisy = detect_not_noisy.loc[detect_not_noisy.site == site]
+        detect_not_noisy = pd.concat([get_trend_detection_power_no_noise(), get_no_trend_detection_power_no_noise()])
+        detect_not_noisy = detect_not_noisy.loc[detect_not_noisy.site == site]
 
     use_samp_durs = pd.to_datetime('2010-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
 
-    # plot noise free detection power
-    freq = max(samp_freqs)
-    plt_data = [detect_not_noisy.loc[f'{site}_{d}_{freq}', 'power'] for d in samp_durs]
+    if detect_not_noisy is not None:
+        # plot noise free detection power
+        freq = max(samp_freqs)
+        plt_data = [detect_not_noisy.loc[f'{site}_{d}_{freq}', 'power'] for d in samp_durs]
 
-    power_ax.plot(use_samp_durs, plt_data, marker='o', label=f'Noise free detection', c='k', alpha=0.5)
+        power_ax.plot(use_samp_durs, plt_data, marker='o', label=f'Noise free detection', c='k', alpha=0.5)
 
     # plot detection power
     colors = ['firebrick', 'orange', 'royalblue', 'purple']
@@ -95,7 +98,6 @@ def plot_single_site_no_noise_power(site):
     conc_ax.set_title('')
     conc_ax.set_ylabel('Concentration (mg/L)')
 
-    # todo integrate plataue power when finished
     detect_not_noisy = pd.concat([get_no_trend_detection_power_no_noise(), get_trend_detection_power_no_noise()])
     detect_not_noisy = detect_not_noisy.loc[detect_not_noisy.site == site]
 
@@ -123,7 +125,7 @@ def plot_single_site_no_noise_power(site):
     return fig
 
 
-def _plot_all_no_noise(outdir):  # todo re-run and review
+def _plot_all_no_noise(outdir):
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
     for site in get_final_sites():
@@ -133,6 +135,17 @@ def _plot_all_no_noise(outdir):  # todo re-run and review
         fig.savefig(outdir.joinpath(f'{site}.png'))
         plt.close()
 
+def plot_all_plateau_sites(outdir):
+    outdir = Path(outdir)
+    outdir.mkdir(exist_ok=True)
+    sites = get_all_plateau_sites()
+    for site in sites:
+        print(site)
+        fig = plot_single_site_detection_power(site)
+        fig.tight_layout()
+        plt.show()
+        fig.savefig(outdir.joinpath(f'{site}.png'))
+        plt.close()
 
 def plot_all(outdir):
     outdir = Path(outdir)
@@ -154,4 +167,5 @@ def plot_all(outdir):
 
 if __name__ == '__main__':
     plot_all(unbacked_dir.joinpath('power_calc_site_plots')) # todo re-run when updated
+    plot_all_plateau_sites(unbacked_dir.joinpath('power_calc_plateau_sites')) # todo re-run and check
     pass
