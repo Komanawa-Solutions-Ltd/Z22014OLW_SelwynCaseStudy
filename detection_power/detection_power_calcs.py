@@ -298,7 +298,7 @@ def get_all_plateau_sites():
     return data.index[np.isclose(data, 0)]
 
 
-def get_plateau_power(recalc=False): # todo run then check
+def get_plateau_power(recalc=False):
     save_path = generated_data_dir.joinpath('plateau_detection_power.hdf')
     if save_path.exists() and not recalc:
         return pd.read_hdf(save_path, key='power')

@@ -9,12 +9,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from detection_power.detection_power_calcs import get_trend_detection_power, get_trend_detection_power_no_noise, \
-    get_no_trend_detection_power_no_noise, get_no_trend_detection_power, samp_durs, samp_freqs, get_plateau_power, get_all_plateau_sites
+    get_no_trend_detection_power_no_noise, get_no_trend_detection_power, samp_durs, samp_freqs, get_plateau_power, \
+    get_all_plateau_sites
 from site_selection.get_n_data import get_n_metadata, get_final_sites
 from generate_true_concentration.gen_true_slope_init_conc import plot_single_site_source_recept
 
 
-def plot_single_site_detection_power(site):
+def plot_single_site_detection_power(site, plot_plateau_power=False):
     fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, figsize=(14, 10), gridspec_kw={'width_ratios': (1, 0.1)}
                             )
     conc_ax = axs[0, 0]
@@ -35,9 +36,9 @@ def plot_single_site_detection_power(site):
     conc_ax.set_title('')
     conc_ax.set_ylabel('Concentration (mg/L)')
 
-    if site in get_all_plateau_sites():
+    if site in get_all_plateau_sites() and plot_plateau_power:
         detect_noisy = get_plateau_power()
-        detect_not_noisy=None
+        detect_not_noisy = None
     else:
         detect_noisy = pd.concat([get_no_trend_detection_power(), get_trend_detection_power()])
         detect_noisy = detect_noisy.loc[detect_noisy.site == site]
@@ -135,17 +136,18 @@ def _plot_all_no_noise(outdir):
         fig.savefig(outdir.joinpath(f'{site}.png'))
         plt.close()
 
+
 def plot_all_plateau_sites(outdir):
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
     sites = get_all_plateau_sites()
     for site in sites:
         print(site)
-        fig = plot_single_site_detection_power(site)
+        fig = plot_single_site_detection_power(site, plot_plateau_power=True)
         fig.tight_layout()
-        plt.show()
         fig.savefig(outdir.joinpath(f'{site}.png'))
         plt.close()
+
 
 def plot_all(outdir):
     outdir = Path(outdir)
@@ -154,7 +156,6 @@ def plot_all(outdir):
         print(site)
         fig = plot_single_site_detection_power(site)
         fig.tight_layout()
-        plt.show()
         fig.savefig(outdir.joinpath(f'{site}.png'))
         plt.close()
 
@@ -162,10 +163,9 @@ def plot_all(outdir):
 # todo for wells --> plot percentage of sites with {10+, 25+, 50+ 75+ 90+} (one plot each?) chance of detecting change
 #  vs time and colored by samp_freq; EXCLUDE all zero chance wells
 # todo for streams detection power vs MRT assumed different plots for different sampling frequencies v time
-# todo write up plataue sites
 
 
 if __name__ == '__main__':
-    plot_all(unbacked_dir.joinpath('power_calc_site_plots')) # todo re-run when updated
-    plot_all_plateau_sites(unbacked_dir.joinpath('power_calc_plateau_sites')) # todo re-run and check
+    plot_all_plateau_sites(unbacked_dir.joinpath('power_calc_plateau_sites'))
+    plot_all(unbacked_dir.joinpath('power_calc_site_plots'))
     pass
