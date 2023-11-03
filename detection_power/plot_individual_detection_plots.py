@@ -161,7 +161,6 @@ def plot_all(outdir):
         plt.close()
 
 
-
 def plot_stream_detection(outdir):
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
@@ -175,7 +174,7 @@ def plot_stream_detection(outdir):
 
     for site in sites:
         fig = plt.figure(figsize=(15, 10))
-        gs = fig.add_gridspec(nrows=len(samp_freqs)+1, ncols=2, width_ratios=(1, 0.1))
+        gs = fig.add_gridspec(nrows=len(samp_freqs) + 1, ncols=2, width_ratios=(1, 0.1))
         power_axs = [fig.add_subplot(gs[i, 0]) for i in range(len(samp_freqs))]
         conc_ax = fig.add_subplot(gs[len(samp_freqs), 0])
         leg_ax = fig.add_subplot(gs[:, 1])
@@ -188,7 +187,7 @@ def plot_stream_detection(outdir):
         for i, (power_ax, freq) in enumerate(zip(power_axs, samp_freqs)):
             power_ax.set_ylabel(f'{freq} samp. per year\nPower (%)')
             for mrt, c in zip(sw_ages, colors):
-                if i ==0:
+                if i == 0:
                     receptor = get_site_true_recept_conc(f'{site}-{mrt}')
                     t = conc_ax.plot(
                         pd.to_datetime('2010-01-01') + pd.to_timedelta(receptor.index.values * 365.25, unit='day'),
@@ -196,7 +195,8 @@ def plot_stream_detection(outdir):
 
                     no_change_recept = get_site_true_recept_conc_no_change(f'{site}-{mrt}')
                     t = conc_ax.plot(
-                        pd.to_datetime('2010-01-01') + pd.to_timedelta(no_change_recept.index.values * 365.25, unit='day'),
+                        pd.to_datetime('2010-01-01') + pd.to_timedelta(no_change_recept.index.values * 365.25,
+                                                                       unit='day'),
                         no_change_recept, color=c, ls=':', label=f'MRT: {mrt} yr\n no reduct.')
 
                 plt_data = [detect_noisy.loc[f'{site}-{mrt}_{d}_{freq}', 'power'] for d in samp_durs]
@@ -209,15 +209,14 @@ def plot_stream_detection(outdir):
             for d in samp_durs:
                 d = pd.to_datetime('2010-01-01') + pd.to_timedelta(d * 365.25, unit='day')
                 power_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
-                if i ==0:
+                if i == 0:
                     conc_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
             power_ax.axvline(pd.to_datetime('2010-01-01'), ls=':', label='reductions start')
             power_ax.set_xlim(pd.to_datetime('2005-01-01'), pd.to_datetime('2065-01-01'))
-            if i==0:
+            if i == 0:
                 conc_ax.axvline(pd.to_datetime('2010-01-01'), ls=':')
                 conc_ax.set_xlim(pd.to_datetime('2005-01-01'), pd.to_datetime('2065-01-01'))
             power_ax.set_xticklabels([])
-
 
         handles, labels = conc_ax.get_legend_handles_labels()
         h, l = power_axs[0].get_legend_handles_labels()
@@ -228,12 +227,63 @@ def plot_stream_detection(outdir):
         fig.savefig(outdir.joinpath(f'{site}_mrt_comp.png'))
         plt.close(fig)
 
-# todo for wells --> plot percentage of sites with {10+, 25+, 50+ 75+ 90+} (one plot each?) chance of detecting change
-#  vs time and colored by samp_freq; EXCLUDE all zero chance wells
+
+def plot_well_overview(outpath):
+    outpath = Path(outpath)
+    outpath.parent.mkdir(exist_ok=True)
+    fig = plt.figure(figsize=(15, 10))
+    gs = fig.add_gridspec(nrows=len(samp_freqs), ncols=2, width_ratios=(1, 0.1))
+    power_axs = [fig.add_subplot(gs[i, 0]) for i in range(len(samp_freqs))]
+    leg_ax = fig.add_subplot(gs[:, 1])
+    leg_ax.axis('off')
+    fig.supxlabel('Time')
+    fig.supylabel('Percent of groundwater network')
+    metadata = get_n_metadata()
+    detect_noisy = pd.concat([get_no_trend_detection_power(), get_trend_detection_power()])
+
+    sites = metadata.loc[metadata.type != 'stream'].index
+    sites = sites[np.in1d(sites, get_final_sites())]
+    ngw_sites = len(sites)
+    sites = sites[~np.in1d(sites, get_all_plateau_sites())]
+
+    use_samp_durs = pd.to_datetime('2010-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
+    percent_limits = [25, 50, 80, 90]
+    colors = ['firebrick', 'darkorange', 'darkcyan', 'indigo']
+
+    fig.suptitle(f'Groundwater Detection Power\n'
+                 f'Percent of sites which can show a reduction ({len(sites)}/{ngw_sites} sites)')
+    for i, (power_ax, freq) in enumerate(zip(power_axs, samp_freqs)):
+        power_ax.set_title(f'{freq} samp. per year')
+        for pl, c in zip(percent_limits, colors):
+            plt_data = []
+            for d in samp_durs:
+                idx = (
+                        np.in1d(detect_noisy['site'], sites)
+                        & (detect_noisy['samp_years'] == d)
+                        & (detect_noisy['samp_per_year'] == freq)
+                )
+                assert idx.sum() == len(sites)
+                idx = idx & (detect_noisy['power'] >= pl)
+                plt_data.append(idx.sum() / len(sites) * 100)
+
+            power_ax.plot(use_samp_durs, plt_data, marker='o', label=f'Power ≥ {pl}% ', c=c)
+            for v in np.arange(0, 110, 10):
+                power_ax.axhline(v, color='k', ls=':', lw=0.5, alpha=0.3)
+            power_ax.set_ylim(-5, 105)
+            for d in samp_durs:
+                d = pd.to_datetime('2010-01-01') + pd.to_timedelta(d * 365.25, unit='day')
+                power_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
+        power_ax.axvline(pd.to_datetime('2010-01-01'), ls=':', label='reductions start', color='k')
+        power_ax.set_xlim(pd.to_datetime('2005-01-01'), pd.to_datetime('2065-01-01'))
+    leg_ax.legend(*power_axs[0].get_legend_handles_labels(), loc='center left')
+    fig.tight_layout()
+    fig.savefig(outpath)
+    plt.close(fig)
 
 
 if __name__ == '__main__':
     rerun = False
+    plot_well_overview(unbacked_dir.joinpath('well_detection_overview.png'))
     if rerun:
         plot_stream_detection(unbacked_dir.joinpath('power_mrt_comp'))
         plot_all_plateau_sites(unbacked_dir.joinpath('power_calc_plateau_sites'))

@@ -502,7 +502,7 @@ def get_n_metadata(recalc=False):
     temp = outdata.loc[outdata['final_keep'], [
         'age_mean', 'frac_1', 'f_p1', 'slope_yr', 'noise', 'nmin', 'nmax', 'conc_2010', 'mk_trend'
     ]].notna().all()
-    assert temp.all(), f'na data in necessary fields of final_keep: {temp}'  # todo any others
+    assert temp.all(), f'na data in necessary fields of final_keep: {temp}'
     return outdata
 
 
