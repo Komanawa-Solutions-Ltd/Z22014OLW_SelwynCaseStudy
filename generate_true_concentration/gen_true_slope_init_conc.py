@@ -11,8 +11,8 @@ from site_selection.get_n_data import get_n_metadata, get_all_n_data, get_final_
 from project_base import generated_data_dir, precision, unbacked_dir
 from gw_age_tools import predict_historical_source_conc, make_age_dist, check_age_inputs, predict_future_conc_bepm
 
-reduction = 0.20
-
+reduction = 0.20 # todo range of reductions 5,10,20,30%
+# todo change start and finish dates 2017-2022.;
 
 def get_site_source_conc(site, recalc=False):
     save_path = generated_data_dir.joinpath('true_source_conc_slope_init.hdf')

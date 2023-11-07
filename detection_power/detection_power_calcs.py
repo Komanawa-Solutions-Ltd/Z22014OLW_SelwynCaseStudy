@@ -14,6 +14,9 @@ from generate_true_concentration.gen_true_slope_init_conc import get_site_true_r
 samp_durs = np.arange(5, 55, 5)
 samp_freqs = (1, 4, 12, 52)
 
+# todo range of reductions 5,10,20,30%
+# todo change start and finish dates 2017-2022.;
+
 
 def make_trend_meta_data():
     use_sites = get_final_sites()
