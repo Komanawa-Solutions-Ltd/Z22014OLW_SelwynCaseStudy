@@ -215,7 +215,7 @@ def _plot_wierdi():  # manually handled
     plt.show()
 
 
-def plot_single_site(site, ndata, metadata, ax=None):
+def plot_single_site(site, ndata, metadata, ax=None, alpha=1):
     """
     plot a single site
     :param site: site id
@@ -233,13 +233,13 @@ def plot_single_site(site, ndata, metadata, ax=None):
         fig = ax.figure
     else:
         fig, ax = plt.subplots(figsize=(14, 8))
-    fig, ax, (handles, labels) = t.plot_data(color='b', ax=ax)
+    fig, ax, (handles, labels) = t.plot_data(color='b', ax=ax, alpha=alpha)
     idx = all_data['exclude_for_noise']
-    sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='r', label='exclude_for_noise')
+    sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='r', label='exclude_for_noise', alpha=alpha)
     handles.append(sc)
     labels.append('exclude_for_noise')
     idx = all_data['always_exclude']
-    sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='k', label='always_exclude')
+    sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='k', label='always_exclude', alpha=alpha)
     handles.append(sc)
     labels.append('always_exclude')
 
