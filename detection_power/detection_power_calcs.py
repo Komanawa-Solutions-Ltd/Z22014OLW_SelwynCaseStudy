@@ -8,14 +8,11 @@ from project_base import generated_data_dir, unbacked_dir
 from gw_detect_power import DetectionPowerCalculator
 import numpy as np
 import pandas as pd
-from site_selection.get_n_data import get_n_metadata, get_final_sites
-from generate_true_concentration.gen_true_slope_init_conc import get_site_true_recept_conc
+from site_selection.get_n_data import get_n_metadata, get_final_sites, start_year
+from generate_true_concentration.gen_true_slope_init_conc import get_site_true_recept_conc, reductions
 
 samp_durs = np.arange(5, 55, 5)
 samp_freqs = (1, 4, 12, 52)
-
-# todo range of reductions 5,10,20,30%
-# todo change start and finish dates 2017-2022.;
 
 
 def make_trend_meta_data():
@@ -36,14 +33,14 @@ def make_trend_meta_data():
     mrt_p1_vals = []
     frac_p1_vals = []
     f_p1_vals = []
-    for samp_dur, samp_freq in itertools.product(samp_durs, samp_freqs):
+    for samp_dur, samp_freq, red in itertools.product(samp_durs, samp_freqs, reductions):
         site_names.extend(use_sites)
         idvs.extend(pd.Series(use_sites) + f'_{samp_dur}_{samp_freq}')
         error_vals.extend(metadata.loc[use_sites, 'noise'])
         samp_years_vals.extend([samp_dur] * len(use_sites))
         samp_per_year_vals.extend([samp_freq] * len(use_sites))
-        initial_conc_vals.extend(metadata.loc[use_sites, 'conc_2010'])
-        red_vals.extend([0.2] * len(use_sites))
+        initial_conc_vals.extend(metadata.loc[use_sites, f'conc_{start_year}'])
+        red_vals.extend([red] * len(use_sites))
         previous_slope_vals.extend(metadata.loc[use_sites, 'slope_yr'])
         mrt_vals.extend(metadata.loc[use_sites, 'age_mean'])
         mrt_p1_vals.extend(metadata.loc[use_sites, 'age_mean'])
@@ -52,7 +49,7 @@ def make_trend_meta_data():
 
         # get true conc
         for site in use_sites:
-            temp = make_true_conc(site, samp_freq=samp_freq, samp_dur=samp_dur)
+            temp = make_true_conc(site, samp_freq=samp_freq, samp_dur=samp_dur, reduction=red)
             out_use_conc.append(temp)
 
     outdata = pd.DataFrame(index=idvs, data={'site': site_names,
@@ -74,8 +71,8 @@ def make_trend_meta_data():
     return outdata, out_use_conc
 
 
-def make_true_conc(site, samp_freq, samp_dur):
-    true_conc = get_site_true_recept_conc(site)
+def make_true_conc(site, reduction, samp_freq, samp_dur):
+    true_conc = get_site_true_recept_conc(site, reduction=reduction)
     locs = np.arange(0, samp_dur + 1 / samp_freq, 1 / samp_freq)
     true_conc = pd.concat((true_conc, pd.Series(index=locs, data=np.nan)))
     true_conc = true_conc.loc[~true_conc.index.duplicated(keep='first')]
@@ -105,14 +102,14 @@ def make_no_trend_meta_data():
     mrt_p1_vals = []
     frac_p1_vals = []
     f_p1_vals = []
-    for samp_dur, samp_freq in itertools.product(samp_durs, samp_freqs):
+    for samp_dur, samp_freq, red in itertools.product(samp_durs, samp_freqs, reductions):
         site_names.extend(use_sites)
         idvs.extend(pd.Series(use_sites) + f'_{samp_dur}_{samp_freq}')
         error_vals.extend(metadata.loc[use_sites, 'noise'])
         samp_years_vals.extend([samp_dur] * len(use_sites))
         samp_per_year_vals.extend([samp_freq] * len(use_sites))
-        initial_conc_vals.extend(metadata.loc[use_sites, 'conc_2010'])
-        red_vals.extend([0.2] * len(use_sites))
+        initial_conc_vals.extend(metadata.loc[use_sites, f'conc_{start_year}'])
+        red_vals.extend([red] * len(use_sites))
         previous_slope_vals.extend(metadata.loc[use_sites, 'slope_yr'])
         mrt_vals.extend(metadata.loc[use_sites, 'age_mean'])
         mrt_p1_vals.extend(metadata.loc[use_sites, 'age_mean'])
@@ -121,7 +118,7 @@ def make_no_trend_meta_data():
 
         # get true conc
         for site in use_sites:
-            temp = make_true_conc(site, samp_freq=samp_freq, samp_dur=samp_dur)
+            temp = make_true_conc(site, samp_freq=samp_freq, samp_dur=samp_dur, reduction=red)
             out_use_conc.append(temp)
 
     outdata = pd.DataFrame(index=idvs, data={'site': site_names,
@@ -342,6 +339,8 @@ def get_plateau_power(recalc=False):
     outdata.to_hdf(save_path, key='power', complib='zlib', complevel=9)
 
     return outdata
+
+
 def run_check_plateau_power(recalc=False):
     v = get_plateau_power(recalc=recalc)
     python_errors = v.python_error.unique()

@@ -57,7 +57,7 @@ def plot_variable_mrt(base_site):
         source.loc[10] = source.loc[0] * (1 - reduction)
         source.loc[100] = source.loc[0] * (1 - reduction)
         source = source.loc[source.index >= -20].sort_index()
-        receptor = get_site_true_recept_conc(site)
+        receptor = get_site_true_recept_conc(site, 0.2)
         t = ax.plot(
             pd.to_datetime('2010-01-01') + pd.to_timedelta(source.index.values * 365.25, unit='day'),
             source,

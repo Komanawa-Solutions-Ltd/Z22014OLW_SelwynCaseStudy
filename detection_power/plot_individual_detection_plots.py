@@ -11,12 +11,12 @@ import matplotlib.pyplot as plt
 from detection_power.detection_power_calcs import get_trend_detection_power, get_trend_detection_power_no_noise, \
     get_no_trend_detection_power_no_noise, get_no_trend_detection_power, samp_durs, samp_freqs, get_plateau_power, \
     get_all_plateau_sites
-from site_selection.get_n_data import get_n_metadata, get_final_sites, sw_ages
+from site_selection.get_n_data import get_n_metadata, get_final_sites, sw_ages, start_year, end_year
 from generate_true_concentration.gen_true_slope_init_conc import plot_single_site_source_recept, \
-    get_site_true_recept_conc, get_site_true_recept_conc_no_change
+    get_site_true_recept_conc, get_site_true_recept_conc_no_change, reductions
 
 
-def plot_single_site_detection_power(site, plot_plateau_power=False):
+def plot_single_site_detection_power(site, reduction, plot_plateau_power=False):
     fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, figsize=(14, 10), gridspec_kw={'width_ratios': (1, 0.1)}
                             )
     conc_ax = axs[0, 0]
@@ -25,7 +25,7 @@ def plot_single_site_detection_power(site, plot_plateau_power=False):
     power_leg = axs[1, 1]
     power_leg.axis('off')
     conc_leg.axis('off')
-    fig, conc_ax, handles, labels = plot_single_site_source_recept(site, ax=conc_ax)
+    fig, conc_ax, handles, labels = plot_single_site_source_recept(site, reduction=reduction, ax=conc_ax)
     for i in range(4):
         handles.pop(2)
         labels.pop(2)
@@ -47,7 +47,7 @@ def plot_single_site_detection_power(site, plot_plateau_power=False):
         detect_not_noisy = pd.concat([get_trend_detection_power_no_noise(), get_no_trend_detection_power_no_noise()])
         detect_not_noisy = detect_not_noisy.loc[detect_not_noisy.site == site]
 
-    use_samp_durs = pd.to_datetime('2010-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
+    use_samp_durs = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
 
     if detect_not_noisy is not None:
         # plot noise free detection power
@@ -68,10 +68,10 @@ def plot_single_site_detection_power(site, plot_plateau_power=False):
         power_ax.axhline(v, color='k', ls=':', lw=0.5, alpha=0.3)
     power_ax.set_ylim(-5, 105)
     for d in samp_durs:
-        d = pd.to_datetime('2010-01-01') + pd.to_timedelta(d * 365.25, unit='day')
+        d = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(d * 365.25, unit='day')
         power_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
         conc_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
-    power_ax.axvline(pd.to_datetime('2010-01-01'), ls=':')
+    power_ax.axvline(pd.to_datetime(f'{start_year}-01-01'), ls=':')
     power_leg.legend(*power_ax.get_legend_handles_labels(), loc='center left')
     power_ax.set_xlim(pd.to_datetime('2000-01-01'), pd.to_datetime('2065-01-01'))
     fig.suptitle(temp)
@@ -79,7 +79,7 @@ def plot_single_site_detection_power(site, plot_plateau_power=False):
     return fig
 
 
-def plot_single_site_no_noise_power(site):
+def plot_single_site_no_noise_power(site, reduction):
     fig, axs = plt.subplots(nrows=2, ncols=2, sharex=True, figsize=(14, 10), gridspec_kw={'width_ratios': (1, 0.1)}
                             )
     conc_ax = axs[0, 0]
@@ -88,7 +88,7 @@ def plot_single_site_no_noise_power(site):
     power_leg = axs[1, 1]
     power_leg.axis('off')
     conc_leg.axis('off')
-    fig, conc_ax, handles, labels = plot_single_site_source_recept(site, ax=conc_ax)
+    fig, conc_ax, handles, labels = plot_single_site_source_recept(site, reduction=reduction, ax=conc_ax)
     for i in range(4):
         handles.pop(2)
         labels.pop(2)
@@ -103,7 +103,7 @@ def plot_single_site_no_noise_power(site):
     detect_not_noisy = pd.concat([get_no_trend_detection_power_no_noise(), get_trend_detection_power_no_noise()])
     detect_not_noisy = detect_not_noisy.loc[detect_not_noisy.site == site]
 
-    use_samp_durs = pd.to_datetime('2010-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
+    use_samp_durs = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
     # plot detection power
     colors = ['firebrick', 'orange', 'royalblue', 'purple']
     for i, (freq, c) in enumerate(zip(samp_freqs, colors)):
@@ -116,10 +116,10 @@ def plot_single_site_no_noise_power(site):
         power_ax.axhline(v, color='k', ls=':', lw=0.5, alpha=0.3)
     power_ax.set_ylim(-5, 105)
     for d in samp_durs:
-        d = pd.to_datetime('2010-01-01') + pd.to_timedelta(d * 365.25, unit='day')
+        d = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(d * 365.25, unit='day')
         power_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
         conc_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
-    power_ax.axvline(pd.to_datetime('2010-01-01'), ls=':')
+    power_ax.axvline(pd.to_datetime(f'{start_year}-01-01'), ls=':')
     power_leg.legend(*power_ax.get_legend_handles_labels(), loc='center left')
     power_ax.set_xlim(pd.to_datetime('2000-01-01'), pd.to_datetime('2065-01-01'))
     fig.suptitle('Noise Free\n' + temp)
@@ -132,10 +132,11 @@ def _plot_all_no_noise(outdir):
     outdir.mkdir(exist_ok=True)
     for site in get_final_sites():
         print(site)
-        fig = plot_single_site_no_noise_power(site)
-        fig.tight_layout()
-        fig.savefig(outdir.joinpath(f'{site}.png'))
-        plt.close()
+        for red in reductions:
+            fig = plot_single_site_no_noise_power(site, reduction=red)
+            fig.tight_layout()
+            fig.savefig(outdir.joinpath(f'{site}_red{int(red * 100)}.png'))
+            plt.close()
 
 
 def plot_all_plateau_sites(outdir):
@@ -144,10 +145,11 @@ def plot_all_plateau_sites(outdir):
     sites = get_all_plateau_sites()
     for site in sites:
         print(site)
-        fig = plot_single_site_detection_power(site, plot_plateau_power=True)
-        fig.tight_layout()
-        fig.savefig(outdir.joinpath(f'{site}.png'))
-        plt.close()
+        for red in reductions:
+            fig = plot_single_site_detection_power(site, plot_plateau_power=True, reduction=red)
+            fig.tight_layout()
+            fig.savefig(outdir.joinpath(f'{site}_red{int(red * 100)}.png'))
+            plt.close()
 
 
 def plot_all(outdir):
@@ -155,10 +157,11 @@ def plot_all(outdir):
     outdir.mkdir(exist_ok=True)
     for site in get_final_sites():
         print(site)
-        fig = plot_single_site_detection_power(site)
-        fig.tight_layout()
-        fig.savefig(outdir.joinpath(f'{site}.png'))
-        plt.close()
+        for red in reductions:
+            fig = plot_single_site_detection_power(site, reduction=red)
+            fig.tight_layout()
+            fig.savefig(outdir.joinpath(f'{site}_red{int(red * 100)}.png'))
+            plt.close()
 
 
 def plot_stream_detection(outdir):
@@ -170,7 +173,7 @@ def plot_stream_detection(outdir):
     sites = sites[np.in1d(sites, get_final_sites())]
     sites = np.unique(['-'.join(e.split('-')[:-1]) for e in sites])
     detect_noisy = pd.concat([get_no_trend_detection_power(), get_trend_detection_power()])
-    use_samp_durs = pd.to_datetime('2010-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
+    use_samp_durs = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
 
     for site in sites:
         fig = plt.figure(figsize=(15, 10))
@@ -188,14 +191,14 @@ def plot_stream_detection(outdir):
             power_ax.set_ylabel(f'{freq} samp. per year\nPower (%)')
             for mrt, c in zip(sw_ages, colors):
                 if i == 0:
-                    receptor = get_site_true_recept_conc(f'{site}-{mrt}')
+                    receptor = get_site_true_recept_conc(f'{site}-{mrt}', reduction=reduction)
                     t = conc_ax.plot(
-                        pd.to_datetime('2010-01-01') + pd.to_timedelta(receptor.index.values * 365.25, unit='day'),
+                        pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(receptor.index.values * 365.25, unit='day'),
                         receptor, color=c, label=f'Mrt: {mrt} yr\nw/ reduct.')
 
                     no_change_recept = get_site_true_recept_conc_no_change(f'{site}-{mrt}')
                     t = conc_ax.plot(
-                        pd.to_datetime('2010-01-01') + pd.to_timedelta(no_change_recept.index.values * 365.25,
+                        pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(no_change_recept.index.values * 365.25,
                                                                        unit='day'),
                         no_change_recept, color=c, ls=':', label=f'MRT: {mrt} yr\n no reduct.')
 
@@ -207,14 +210,14 @@ def plot_stream_detection(outdir):
                 power_ax.axhline(v, color='k', ls=':', lw=0.5, alpha=0.3)
             power_ax.set_ylim(-5, 105)
             for d in samp_durs:
-                d = pd.to_datetime('2010-01-01') + pd.to_timedelta(d * 365.25, unit='day')
+                d = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(d * 365.25, unit='day')
                 power_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
                 if i == 0:
                     conc_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
-            power_ax.axvline(pd.to_datetime('2010-01-01'), ls=':', label='reductions start')
+            power_ax.axvline(pd.to_datetime(f'{start_year}-01-01'), ls=':', label='reductions start')
             power_ax.set_xlim(pd.to_datetime('2005-01-01'), pd.to_datetime('2065-01-01'))
             if i == 0:
-                conc_ax.axvline(pd.to_datetime('2010-01-01'), ls=':')
+                conc_ax.axvline(pd.to_datetime(f'{start_year}-01-01'), ls=':')
                 conc_ax.set_xlim(pd.to_datetime('2005-01-01'), pd.to_datetime('2065-01-01'))
             power_ax.set_xticklabels([])
 
@@ -228,7 +231,7 @@ def plot_stream_detection(outdir):
         plt.close(fig)
 
 
-def plot_well_overview(outpath):
+def plot_well_overview(outpath, reduction):
     outpath = Path(outpath)
     outpath.parent.mkdir(exist_ok=True)
     fig = plt.figure(figsize=(15, 10))
@@ -246,7 +249,7 @@ def plot_well_overview(outpath):
     ngw_sites = len(sites)
     sites = sites[~np.in1d(sites, get_all_plateau_sites())]
 
-    use_samp_durs = pd.to_datetime('2010-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
+    use_samp_durs = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
     percent_limits = [25, 50, 80, 90]
     colors = ['firebrick', 'darkorange', 'darkcyan', 'indigo']
 
@@ -261,6 +264,7 @@ def plot_well_overview(outpath):
                         np.in1d(detect_noisy['site'], sites)
                         & (detect_noisy['samp_years'] == d)
                         & (detect_noisy['samp_per_year'] == freq)
+                        & (detect_noisy['reduction'] == reduction)
                 )
                 assert idx.sum() == len(sites)
                 idx = idx & (detect_noisy['power'] >= pl)
@@ -271,21 +275,25 @@ def plot_well_overview(outpath):
                 power_ax.axhline(v, color='k', ls=':', lw=0.5, alpha=0.3)
             power_ax.set_ylim(-5, 105)
             for d in samp_durs:
-                d = pd.to_datetime('2010-01-01') + pd.to_timedelta(d * 365.25, unit='day')
+                d = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(d * 365.25, unit='day')
                 power_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
-        power_ax.axvline(pd.to_datetime('2010-01-01'), ls=':', label='reductions start', color='k')
+        power_ax.axvline(pd.to_datetime(f'{start_year}-01-01'), ls=':', label='reductions start', color='k')
         power_ax.set_xlim(pd.to_datetime('2005-01-01'), pd.to_datetime('2065-01-01'))
     leg_ax.legend(*power_axs[0].get_legend_handles_labels(), loc='center left')
     fig.tight_layout()
     fig.savefig(outpath)
     plt.close(fig)
 
+def plot_all_overivew():
+    for red in reductions:
+        plot_well_overview(unbacked_dir.joinpath(f'well_detection_overview_red{int(red*100)}.png'), reduction=red)
+
 
 if __name__ == '__main__':
     rerun = False
-    plot_well_overview(unbacked_dir.joinpath('well_detection_overview.png'))
     if rerun:
         plot_stream_detection(unbacked_dir.joinpath('power_mrt_comp'))
         plot_all_plateau_sites(unbacked_dir.joinpath('power_calc_plateau_sites'))
         plot_all(unbacked_dir.joinpath('power_calc_site_plots'))
+        plot_all_overivew()
     pass

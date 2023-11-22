@@ -10,6 +10,9 @@ from sklearn.neighbors import LocalOutlierFactor
 from kendall_stats import MannKendall
 from site_selection.age_tracer_data import get_final_age_data
 
+start_year = 2017
+end_year = 2022
+
 age_sample_order = (
     # (dist, depth(+-))
     (500, 5),
@@ -97,7 +100,7 @@ def _generate_noise_data(metadata):
         trend = metadata.loc[site, 'mk_trend']
 
         if trend <= 0:
-            metadata.loc[site, 'conc_2010'] = site_ndata['n_conc'].median()
+            metadata.loc[site, f'conc_{start_year}'] = site_ndata['n_conc'].median()
             metadata.loc[site, 'noise'] = metadata.loc[site, 'nstd']
             metadata.loc[site, 'slope_yr'] = 0
             metadata.loc[site, 'intercept'] = np.nan
@@ -114,8 +117,8 @@ def _generate_noise_data(metadata):
             metadata.loc[site, 'intercept'] = senintercept
             metadata.loc[site, 'noise'] = site_ndata['resid'].std()
 
-            dt_2010 = (pd.to_datetime('2010-01-01') - site_ndata['datetime'].min()).days / 365.25
-            metadata.loc[site, 'conc_2010'] = senslope * dt_2010 + senintercept
+            xtime = (pd.to_datetime(f'{start_year}-01-01') - site_ndata['datetime'].min()).days / 365.25
+            metadata.loc[site, f'conc_{start_year}'] = senslope * xtime + senintercept
 
 
 def _manage_manual_age(metadata):
@@ -258,7 +261,7 @@ def plot_single_site(site, ndata, metadata, ax=None, alpha=1):
         f'lag={metadata.loc[site, "age_mean"]:.2f} yr {lag_key}\n'
         f'noise={metadata.loc[site, "noise"]:.2f} mg/L, '
         f'slope={metadata.loc[site, "slope_yr"]:.2f} mg/L/yr, '
-        f'2008-2012 concentration={metadata.loc[site, "conc_2010"]:.2f} mg/L')
+        f'start concentration={metadata.loc[site, f"conc_{start_year}"]:.2f} mg/L')
     ax.legend(handles, labels)
     return fig, ax, handles, labels
 
@@ -500,7 +503,7 @@ def get_n_metadata(recalc=False):
     outdata['f_p1'] = outdata['f_p1'].fillna(outdata['f_p1'].median())
 
     temp = outdata.loc[outdata['final_keep'], [
-        'age_mean', 'frac_1', 'f_p1', 'slope_yr', 'noise', 'nmin', 'nmax', 'conc_2010', 'mk_trend'
+        'age_mean', 'frac_1', 'f_p1', 'slope_yr', 'noise', 'nmin', 'nmax', f'conc_{start_year}', 'mk_trend'
     ]].notna().all()
     assert temp.all(), f'na data in necessary fields of final_keep: {temp}'
     return outdata
