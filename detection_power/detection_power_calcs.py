@@ -292,14 +292,15 @@ def make_check_all_detection_powers(recalc=False):
         assert v.python_error.notna().sum() == 0, f'python error for {k}: {v.python_error.unique()}'
 
 
-def get_all_plateau_sites():
+def get_all_plateau_sites(reduction):
     data = get_trend_detection_power()
+    data = data.loc[data.reduction == reduction]
     data = data.groupby('site')['power'].sum()
     return data.index[np.isclose(data, 0)]
 
 
-def get_plateau_power(recalc=False):
-    save_path = generated_data_dir.joinpath('plateau_detection_power.hdf')
+def get_plateau_power(reduction, recalc=False):
+    save_path = generated_data_dir.joinpath(f'plateau_detection_power_red{int(reduction * 100)}.hdf')
     if save_path.exists() and not recalc:
         return pd.read_hdf(save_path, key='power')
     outdata = []
@@ -310,11 +311,12 @@ def get_plateau_power(recalc=False):
                                              min_p_value=0.05, min_samples=10,
                                              expect_slope=(1, 0), nparts=2, min_part_size=5 * freq,
                                              no_trend_alpha=0.5, nsims_pettit=2000, efficent_mode=False,
-                                             mpmk_check_step=1, mpmk_efficent_min=10, mpmk_window=0.03,
+                                             mpmk_check_step=max(1, int(freq / 4)), mpmk_efficent_min=10,
+                                             mpmk_window=0.03,
                                              ncores=ncores, print_freq=200)
 
         metadata, use_conc = make_trend_meta_data()
-        use_sites = get_all_plateau_sites()
+        use_sites = get_all_plateau_sites(reduction=reduction)
         idx = np.in1d(metadata.site, use_sites) & (metadata.samp_per_year == freq)
         metadata = metadata.loc[idx]
         use_conc = [e for i, e in zip(idx, use_conc) if i]

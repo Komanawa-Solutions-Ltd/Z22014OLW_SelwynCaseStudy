@@ -37,8 +37,8 @@ def plot_single_site_detection_power(site, reduction, plot_plateau_power=False):
     conc_ax.set_title('')
     conc_ax.set_ylabel('Concentration (mg/L)')
 
-    if site in get_all_plateau_sites() and plot_plateau_power:
-        detect_noisy = get_plateau_power()
+    if site in get_all_plateau_sites(reduction=reduction) and plot_plateau_power:
+        detect_noisy = get_plateau_power(reduction=reduction)
         detect_not_noisy = None
     else:
         detect_noisy = pd.concat([get_no_trend_detection_power(), get_trend_detection_power()])
@@ -142,10 +142,10 @@ def _plot_all_no_noise(outdir):
 def plot_all_plateau_sites(outdir):
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
-    sites = get_all_plateau_sites()
-    for site in sites:
-        print(site)
-        for red in reductions:
+    for red in reductions:
+        sites = get_all_plateau_sites(reduction=red)
+        for site in sites:
+            print(site)
             fig = plot_single_site_detection_power(site, plot_plateau_power=True, reduction=red)
             fig.tight_layout()
             fig.savefig(outdir.joinpath(f'{site}_red{int(red * 100)}.png'))
@@ -247,7 +247,7 @@ def plot_well_overview(outpath, reduction):
     sites = metadata.loc[metadata.type != 'stream'].index
     sites = sites[np.in1d(sites, get_final_sites())]
     ngw_sites = len(sites)
-    sites = sites[~np.in1d(sites, get_all_plateau_sites())]
+    sites = sites[~np.in1d(sites, get_all_plateau_sites(reduction=reduction))]
 
     use_samp_durs = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
     percent_limits = [25, 50, 80, 90]

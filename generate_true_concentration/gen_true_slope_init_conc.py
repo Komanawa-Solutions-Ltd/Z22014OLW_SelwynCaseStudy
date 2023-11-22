@@ -50,10 +50,13 @@ def get_site_source_conc(site, recalc=False):
     if np.isclose(prev_slope, 0):
         mrt, mrt_p2 = check_age_inputs(mrt, mrt_p1, mrt_p2, frac_p1, precision, f_p1, f_p2)
         age_step, ages, age_fractions = make_age_dist(mrt, mrt_p1, mrt_p2, frac_p1, precision, f_p1, f_p2)
-        hist = pd.Series(index=ages * -1, data=init_conc)
+        out_ages = np.arange(0, max(mrt, mrt_p1, mrt_p2, 30) * 5 + 1, age_step)
+        hist = pd.Series(index=out_ages * -1, data=init_conc)
     else:
+        mrt, mrt_p2 = check_age_inputs(mrt, mrt_p1, mrt_p2, frac_p1, precision, f_p1, f_p2)
+        start_age = max(mrt, mrt_p1, mrt_p2, 30)
         hist = predict_historical_source_conc(init_conc, mrt, mrt_p1, mrt_p2, frac_p1, f_p1, f_p2, prev_slope, max_conc,
-                                              min_conc, start_age=np.nan, precision=precision, p0=p0)
+                                              min_conc, start_age=start_age, precision=precision, p0=p0)
         hist.to_hdf(save_path, key=site, complib='zlib', complevel=9)
     return hist
 
@@ -87,6 +90,7 @@ def get_site_true_recept_conc(site, reduction, recalc=False):
                                              fill_value=min_conc,
                                              fill_threshold=.5, precision=precision, pred_step=10 ** -precision)
     receptor_conc.to_hdf(save_path, key=site, complib='zlib', complevel=9)
+    return receptor_conc
 
 
 def get_site_true_recept_conc_no_change(site, recalc=False):
@@ -137,7 +141,7 @@ def recalc_all_sites(recalc=False):
 def plot_single_site_source_recept(site, reduction, ax=None):
     ndata = get_all_n_data()
     metadata = get_n_metadata()
-    fig, ax, handles, labels = plot_single_site(site, ndata, metadata, ax=ax)
+    fig, ax, handles, labels = plot_single_site(site, ndata, metadata, ax=ax, reduction=reduction)
     source = get_site_source_conc(site)
     source.loc[end_year - start_year] = source.loc[0] * (1 - reduction)
     source.loc[100] = source.loc[0] * (1 - reduction)
@@ -199,5 +203,5 @@ def recalc_problem_sites():
 
 
 if __name__ == '__main__':
-    # recalc_all_sites(True)
+    #recalc_all_sites(True)
     plot_all_sites()

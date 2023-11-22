@@ -218,7 +218,7 @@ def _plot_wierdi():  # manually handled
     plt.show()
 
 
-def plot_single_site(site, ndata, metadata, ax=None, alpha=1):
+def plot_single_site(site, ndata, metadata, ax=None, alpha=1, reduction=None):
     """
     plot a single site
     :param site: site id
@@ -253,15 +253,22 @@ def plot_single_site(site, ndata, metadata, ax=None, alpha=1):
         lag_key = f'MRT inferred: {metadata.loc[site, "age_comment"]}'
     else:
         lag_key = f'MRT inferred: median within {mdist}m +- {metadata.loc[site, "age_depth"]}m depth'
+    title = [
 
-    ax.set_title(
-        f'{site_type.capitalize()} {site}\n'
+    ]
+    if reduction is None:
+        title.append(f'{site_type.capitalize()} {site}\n')
+    else:
+        title.append(f'{site_type.capitalize()} {site}, reduction={int(reduction * 100)}%\n')
+    title.append(
+
         f'depth={metadata.loc[site, "depth"]:.0f}m, '
         f'trend={MannKendall.map_trend(metadata.loc[site, "mk_trend"])}, p={metadata.loc[site, "mk_p"]:.2f}\n'
         f'lag={metadata.loc[site, "age_mean"]:.2f} yr {lag_key}\n'
         f'noise={metadata.loc[site, "noise"]:.2f} mg/L, '
         f'slope={metadata.loc[site, "slope_yr"]:.2f} mg/L/yr, '
         f'start concentration={metadata.loc[site, f"conc_{start_year}"]:.2f} mg/L')
+    ax.set_title(''.join(title))
     ax.legend(handles, labels)
     return fig, ax, handles, labels
 
