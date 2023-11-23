@@ -365,7 +365,7 @@ def copy_to_gdrive():
     shutil.copytree(generated_data_dir, savepath)
 
 
-test_dcp = True
+test_dcp = False
 ncores = None
 if __name__ == '__main__': # todo run/check
 
