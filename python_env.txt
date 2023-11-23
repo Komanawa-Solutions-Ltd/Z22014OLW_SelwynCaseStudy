@@ -3,8 +3,8 @@ conda create -c conda-forge --name OLW python=3.11 pandas=2.0.3 numpy=1.25.2 mat
 
 conda activate OLW
 ksltoken=""
-pip install "git+https://${kslgittoken}@github.com/Komanawa-Solutions-Ltd/kslcore.git"  # private repo for internal path management
 pip install pyhomogeneity
+pip install git+https://$kslgittoken@github.com/Komanawa-Solutions-Ltd/kslcore.git  # private repo for internal path management
 pip install git+https://github.com/Komanawa-Solutions-Ltd/kendall_multipart_kendall.git
 pip install git+https://github.com/Komanawa-Solutions-Ltd/gw_age_tools
 pip install git+https://github.com/Komanawa-Solutions-Ltd/gw_detect_power
