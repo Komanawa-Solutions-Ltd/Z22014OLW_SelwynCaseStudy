@@ -20,7 +20,7 @@ cd ~/PycharmProjects/Z22014OLW_SelwynCaseStudy
 git fetch --all
 git reset --hard origin/main
 # -u for unbuffered output, note calling conda run python -u [scriptname].py does not work
-python -u [scriptname].py
+PYTHONPATH="$PYTHONPATH:$PWD" python -u [scriptname].py
 
 # disconnect tmux session
 ctrl+b d

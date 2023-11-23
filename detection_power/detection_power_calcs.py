@@ -367,7 +367,7 @@ def copy_to_gdrive():
 
 test_dcp = True
 ncores = None
-if __name__ == '__main__':
+if __name__ == '__main__': # todo run/check
     make_check_all_detection_powers(False)
     run_check_plateau_power(recalc=False)
     copy_to_gdrive()

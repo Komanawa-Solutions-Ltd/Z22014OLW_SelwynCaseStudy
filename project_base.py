@@ -10,6 +10,6 @@ project_name = 'Z22014OLW_SelwynCaseStudy'
 proj_root = Path(__file__).parent  # base of git repo
 generated_data_dir = proj_root.joinpath('GeneratedData')
 generated_data_dir.mkdir(exist_ok=True)
-project_dir = KslEnv.shared_gdrive.joinpath('Z22014OLW_OLWGroundwater','Selwyn_subproject')
+project_dir = KslEnv.shared_drive('Z22014OLW_OLWGroundwater').joinpath('Selwyn_subproject')
 unbacked_dir = KslEnv.unbacked.joinpath(project_name)
 unbacked_dir.mkdir(exist_ok=True)
