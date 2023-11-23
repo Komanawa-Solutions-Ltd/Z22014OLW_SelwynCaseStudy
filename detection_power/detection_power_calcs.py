@@ -38,7 +38,7 @@ def make_trend_meta_data():
     f_p1_vals = []
     for samp_dur, samp_freq, red in itertools.product(samp_durs, samp_freqs, reductions):
         site_names.extend(use_sites)
-        idvs.extend(pd.Series(use_sites) + f'_{samp_dur}_{samp_freq}')
+        idvs.extend(pd.Series(use_sites) + f'_{samp_dur}_{samp_freq}_{int(red * 100)}')
         error_vals.extend(metadata.loc[use_sites, 'noise'])
         samp_years_vals.extend([samp_dur] * len(use_sites))
         samp_per_year_vals.extend([samp_freq] * len(use_sites))
@@ -107,7 +107,7 @@ def make_no_trend_meta_data():
     f_p1_vals = []
     for samp_dur, samp_freq, red in itertools.product(samp_durs, samp_freqs, reductions):
         site_names.extend(use_sites)
-        idvs.extend(pd.Series(use_sites) + f'_{samp_dur}_{samp_freq}')
+        idvs.extend(pd.Series(use_sites) + f'_{samp_dur}_{samp_freq}_{int(red * 100)}')
         error_vals.extend(metadata.loc[use_sites, 'noise'])
         samp_years_vals.extend([samp_dur] * len(use_sites))
         samp_per_year_vals.extend([samp_freq] * len(use_sites))
