@@ -67,7 +67,7 @@ def make_trend_meta_data():
                                              'frac_p1': frac_p1_vals,
                                              'f_p1': f_p1_vals,
                                              })
-    assert len(outdata) == len(use_sites) * len(samp_durs) * len(samp_freqs)
+    assert len(outdata) == len(use_sites) * len(samp_durs) * len(samp_freqs) * len(reductions)
     assert len(outdata.index.unique()) == len(outdata)
     assert len(outdata.site.unique()) == len(use_sites)
     assert len(out_use_conc) == len(outdata)
@@ -136,7 +136,7 @@ def make_no_trend_meta_data():
                                              'frac_p1': frac_p1_vals,
                                              'f_p1': f_p1_vals,
                                              })
-    assert len(outdata) == len(use_sites) * len(samp_durs) * len(samp_freqs)
+    assert len(outdata) == len(use_sites) * len(samp_durs) * len(samp_freqs) * len(reductions)
     assert len(outdata.index.unique()) == len(outdata)
     assert len(outdata.site.unique()) == len(use_sites)
     assert len(out_use_conc) == len(outdata)
@@ -368,6 +368,8 @@ def copy_to_gdrive():
 test_dcp = True
 ncores = None
 if __name__ == '__main__': # todo run/check
+
+    make_no_trend_meta_data()
     make_check_all_detection_powers(False)
     run_check_plateau_power(recalc=False)
     copy_to_gdrive()
