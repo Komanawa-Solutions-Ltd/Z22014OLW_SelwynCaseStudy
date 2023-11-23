@@ -1,7 +1,10 @@
 """
+a quick figure for my hydrosoc preoentation
+
 created matt_dumont 
 on: 20/11/23
 """
+import time
 import warnings
 
 from project_base import unbacked_dir, generated_data_dir
@@ -27,6 +30,12 @@ from generate_true_concentration.gen_true_slope_init_conc import get_site_source
 
 
 def plot_variable_mrt(base_site, reduction=0.2):
+    """
+    Plot the affect of MRT on detection power
+    :param base_site: base stream site
+    :param reduction: fraction reduction
+    :return:
+    """
     assert reduction in reductions
     ndata = get_all_n_data()
     metadata = get_n_metadata()
