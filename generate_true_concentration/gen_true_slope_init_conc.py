@@ -89,7 +89,7 @@ def get_site_true_recept_conc(site, reduction, recalc=False):
                                              mrt_p1=mrt_p1, frac_p1=frac_p1, f_p1=f_p1, f_p2=f_p2, mrt=mrt, mrt_p2=None,
                                              fill_value=min_conc,
                                              fill_threshold=.5, precision=precision, pred_step=10 ** -precision)
-    receptor_conc.to_hdf(save_path, key=site, complib='zlib', complevel=9)
+    receptor_conc.to_hdf(save_path, key=key, complib='zlib', complevel=9)
     return receptor_conc
 
 
@@ -203,5 +203,5 @@ def recalc_problem_sites():
 
 
 if __name__ == '__main__':
-    #recalc_all_sites(True)
+    # recalc_all_sites(True)
     plot_all_sites()
