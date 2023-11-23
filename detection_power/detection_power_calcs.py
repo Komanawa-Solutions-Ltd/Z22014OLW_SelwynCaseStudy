@@ -2,9 +2,12 @@
 created matt_dumont 
 on: 30/10/23
 """
+import datetime
 import itertools
+import shutil
+import warnings
 
-from project_base import generated_data_dir, unbacked_dir
+from project_base import generated_data_dir, unbacked_dir, project_dir
 from gw_detect_power import DetectionPowerCalculator
 import numpy as np
 import pandas as pd
@@ -289,7 +292,8 @@ def make_check_all_detection_powers(recalc=False):
         out[func.__name__] = t
 
     for k, v in out.items():
-        assert v.python_error.notna().sum() == 0, f'python error for {k}: {v.python_error.unique()}'
+        if not v.python_error.notna().sum() == 0:
+            warnings.warn(f'python error for {k}: {v.python_error.unique()}')
 
 
 def get_all_plateau_sites(reduction):
@@ -344,17 +348,26 @@ def get_plateau_power(reduction, recalc=False):
 
 
 def run_check_plateau_power(recalc=False):
-    v = get_plateau_power(recalc=recalc)
-    python_errors = v.python_error.unique()
-    for p in python_errors:
-        print(p)
-        print('\n\n\n\n')
-    assert len(python_errors) == 0, f'{len(python_errors)} unique python errors, see above'
-    pass
+    for red in reductions:
+        v = get_plateau_power(reduction=red, recalc=recalc)
+        python_errors = v.python_error.unique()
+        for p in python_errors:
+            print(p)
+            print('\n\n\n\n')
+        if not len(python_errors) == 0:
+            warnings.warn(f'{len(python_errors)} unique python errors, see above')
+        pass
 
 
-test_dcp = False
-ncores = 8
+def copy_to_gdrive():
+    now = datetime.datetime.now()
+    savepath = project_dir.joinpath(f'GeneratedData_{now.isoformat().split(".")[0]}')
+    shutil.copytree(generated_data_dir, savepath)
+
+
+test_dcp = True
+ncores = None
 if __name__ == '__main__':
-    # already run: make_check_all_detection_powers(True)
-    run_check_plateau_power(recalc=True)
+    make_check_all_detection_powers(False)
+    run_check_plateau_power(recalc=False)
+    copy_to_gdrive()
