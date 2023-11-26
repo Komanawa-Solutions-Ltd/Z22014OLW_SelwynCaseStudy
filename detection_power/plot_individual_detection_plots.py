@@ -351,7 +351,7 @@ def plot_all_overivew(outdir):
 
 
 if __name__ == '__main__':
-    rerun = False
+    rerun = False # todo save to repo when done
     if rerun:
         plot_all_overivew(unbacked_dir.joinpath('overview_plots'))
         plot_all(unbacked_dir.joinpath('power_calc_site_plots'))
