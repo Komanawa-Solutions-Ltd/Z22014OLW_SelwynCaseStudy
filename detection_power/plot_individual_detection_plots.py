@@ -351,10 +351,10 @@ def plot_all_overivew(outdir):
 
 
 if __name__ == '__main__':
-    rerun = False # todo save to repo when done
+    rerun = False
     if rerun:
-        plot_all_overivew(unbacked_dir.joinpath('overview_plots'))
-        plot_all(unbacked_dir.joinpath('power_calc_site_plots'))
-        plot_all_plateau_sites(unbacked_dir.joinpath('power_calc_plateau_sites'))
-        plot_stream_detection(unbacked_dir.joinpath('power_mrt_comp'))
+        plot_all_overivew(generated_data_dir.joinpath('overview_plots'))
+        plot_all(generated_data_dir.joinpath('power_calc_site_plots'))
+        plot_all_plateau_sites(generated_data_dir.joinpath('power_calc_plateau_sites'))
+        plot_stream_detection(generated_data_dir.joinpath('power_mrt_comp'))
     pass
