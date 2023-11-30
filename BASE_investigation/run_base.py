@@ -5,13 +5,15 @@ on: 24/11/23
 
 # todo
 import tempfile
-
+import traceback
+import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
 from solvers.DreamzsBPEFM import DreamzsBpefmSolver
 from pydream.parameters import SampledParam
 from scipy.stats import uniform
+from run_managers.run_multiprocess import run_multiprocess
 
 from site_selection.get_n_data import get_n_metadata, plot_single_site, get_all_n_data
 import geopandas as gpd
@@ -19,7 +21,9 @@ from project_base import unbacked_dir
 
 base_dir = unbacked_dir.joinpath('BASE')
 base_dir.mkdir(exist_ok=True)
-
+logdir = base_dir.joinpath('logs')
+logdir.mkdir(exist_ok=True)
+nchains = 5
 sites = [
     'Harts Creek - Lower Lake Rd mrt-10',
     'Harts Creek - Lower Lake Rd mrt-30',
@@ -55,28 +59,41 @@ def get_dreamz(site, rerun=False):
     ndata = get_all_n_data()
     data = get_n_metadata()
     data = data.loc[site]
-    ndata = ndata.loc[ndata.site==site]
+    ndata = ndata.loc[(ndata.site_id == site) & ~ndata.always_exclude].set_index('datetime').sort_index()['n_conc']
 
+    mrt = mrt_p1 = data['age_mean']
+    f_p1 = data['f_p1']
+    model_name = f'{site}_BASE'
+    precision = 2
+    if mrt < 5:
+        break_freq = '30D'  # approximately monthly
+        precision = 3
+    elif mrt < 20:
+        break_freq = '182D'  # approximately half annually
+    else:
+        break_freq = 'A'
 
-    ninf = 20
-    model_name = f'{site}_annual'
-
-    dbs = DreamzsBpefmSolver(save_dir=base_dir, n_inflections='A', # todo maybe more frequent breakpoints for some sites
-                             ts_data=conc_data,
+    dbs = DreamzsBpefmSolver(save_dir=base_dir, n_inflections=break_freq,
+                             ts_data=ndata,
                              inflection_times=None, cdf_inflection_start=0.05,
-                             **age_kwargs)
+                             mrt=mrt, mrt_p1=mrt_p1, mrt_p2=None, frac_p1=1, f_p1=f_p1,
+                             f_p2=0.5,  # dummy
+                             precision=precision)
 
-    starts = [0.05] + [0.05] * (2) + [0.05] * (ninf - 1)  # todo could auto generate from ts_data???
-    endval = [0.15] + [1.0] * (2) + [5.0] * (ninf - 1)
-    params = [
-        SampledParam(uniform, starts, endval),
-    ]
+    params = SampledParam(uniform, 0.1, 20)
 
     sampled_params, log_ps = dbs.run_dreamzs(
-            model_name=model_name,
-            params=params,
-            niterations=10000, nchains=5, starts=None, verbose=True,
-            nverbose=100, restart=False, start_random=True, hardboundaries=True, multitry=False,rerun=rerun)
+        model_name=model_name,
+        params=params,
+        niterations=10000, nchains=nchains, starts=None, verbose=True,
+        nverbose=100, restart=False, start_random=True, hardboundaries=True, multitry=False, rerun=rerun)
+
+    return dbs, model_name
+
+
+def plot_base(site, outdir):
+    outdir = Path(outdir)
+    dbs, model_name = get_dreamz(site)
     fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.05)
     ax[0].set_xlim(pd.to_datetime('2000-01-01'), pd.to_datetime('2025-01-01'))
     fig.tight_layout()
@@ -88,5 +105,30 @@ def get_dreamz(site, rerun=False):
     fig.savefig(outdir.joinpath(f'{model_name}_params.png'))
 
 
+def run_all(rerun=False):
+    for site in sites:
+        print(f'running {site}')
+        dbs, model_name = get_dreamz(site, rerun=rerun)
+        fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.05)
+        plt.show()
+
+
+def _get_dreamz_mp(kwargs):
+    try:
+        get_dreamz(**kwargs)
+    except Exception:
+        t = traceback.format_exc()
+        with logdir.joinpath(f'{kwargs["site"]}_{datetime.datetime.now().isoformat()}.log').open('w') as f:
+            f.write(t)
+
+
+def run_all_mp(rerun=False):
+    runs = []
+    for site in sites:
+        runs.append(dict(site=site, rerun=rerun))
+    run_multiprocess(_get_dreamz_mp, runs, subprocess_cores=nchains)
+
+
 if __name__ == '__main__':
+    run_all()
     pass
