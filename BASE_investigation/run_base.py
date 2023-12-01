@@ -98,7 +98,7 @@ def get_dreamz(site, rerun=False):
                              f_p2=0.5,  # dummy
                              precision=precision)
 
-    params = SampledParam(uniform, 0.1, 20)
+    params = SampledParam(uniform, 0.1, 20)  # todo I wish I could draw from an auto correlated distribution
 
     sampled_params, log_ps = dbs.run_dreamzs(
         model_name=model_name,
