@@ -218,7 +218,7 @@ def _plot_wierdi():  # manually handled
     plt.show()
 
 
-def plot_single_site(site, ndata, metadata, ax=None, alpha=1, reduction=None):
+def plot_single_site(site, ndata, metadata, ax=None, alpha=1, reduction=None, plot_auto_exlcude=False, rolling=None):
     """
     plot a single site
     :param site: site id
@@ -245,6 +245,23 @@ def plot_single_site(site, ndata, metadata, ax=None, alpha=1, reduction=None):
     sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='k', label='always_exclude', alpha=alpha)
     handles.append(sc)
     labels.append('always_exclude')
+    if plot_auto_exlcude:
+        idx = all_data['unsup_outlier_auto']
+        sc = ax.scatter(all_data.loc[idx].index, all_data.loc[idx, 'n_conc'], color='y',
+                        alpha=alpha/2)
+        handles.append(sc)
+        labels.append('unsupervised removal')
+    if rolling is not None:
+        t = (all_data['n_conc'].sort_index())
+        t = t.rolling(rolling, center=True).mean()
+        sc = ax.plot(t.index, t, color='purple', ls=':')
+        handles.append(sc[0])
+        labels.append(f'rolling ({rolling}) mean')
+        t = t.rolling(rolling, center=True).quantile(0.9)
+        sc = ax.plot(t.index, t, color='pink', ls=':')
+        handles.append(sc[0])
+        labels.append(f'rolling ({rolling}) 90th')
+
 
     mdist = metadata.loc[site, 'age_dist']
     if mdist == 0:

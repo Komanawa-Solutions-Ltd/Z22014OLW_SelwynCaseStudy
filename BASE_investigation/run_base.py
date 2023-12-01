@@ -17,10 +17,12 @@ from run_managers.run_multiprocess import run_multiprocess
 
 from site_selection.get_n_data import get_n_metadata, plot_single_site, get_all_n_data
 import geopandas as gpd
-from project_base import unbacked_dir
+from project_base import unbacked_dir, project_dir
 
 base_dir = unbacked_dir.joinpath('BASE')
 base_dir.mkdir(exist_ok=True)
+run_dir = base_dir.joinpath('runs')
+run_dir.mkdir(exist_ok=True)
 logdir = base_dir.joinpath('logs')
 logdir.mkdir(exist_ok=True)
 nchains = 5
@@ -34,8 +36,6 @@ sites = [
     'm36_0698',
     'm36_3683',
     'm36_4126',
-    'Selwyn River-Coes Ford mrt-10',
-    'Selwyn River-Coes Ford mrt-30',
 ]
 
 
@@ -51,7 +51,19 @@ def plot_sites():
     plt_dir = base_dir.joinpath('data_plots')
     plt_dir.mkdir(exist_ok=True)
     for site in sites:
-        fig, ax, handles, labels = plot_single_site(site, ndata, data)
+        mrt = data.loc[site, 'age_mean']
+        auto_ex = False
+        if 'Harts' in site:
+            auto_ex = True
+        if mrt < 5:
+            rolling = '20D'  # approximately monthly
+        elif 'Selwyn' in site:
+            rolling = '300D'
+        elif mrt < 20:
+            rolling = '60D'  # approximately half annually
+        else:
+            rolling = '120D'
+        fig, ax, handles, labels = plot_single_site(site, ndata, data, plot_auto_exlcude=auto_ex)
         fig.savefig(plt_dir.joinpath(f'{site}.png'))
 
 
@@ -93,6 +105,7 @@ def get_dreamz(site, rerun=False):
 
 def plot_base(site, outdir):
     outdir = Path(outdir)
+    outdir.mkdir(exist_ok=True)
     dbs, model_name = get_dreamz(site)
     fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.05)
     ax[0].set_xlim(pd.to_datetime('2000-01-01'), pd.to_datetime('2025-01-01'))
@@ -130,5 +143,7 @@ def run_all_mp(rerun=False):
 
 
 if __name__ == '__main__':
-    run_all()
+    run_all_mp()
+    for site in sites:
+        plot_base(site, outdir=project_dir.joinpath('BASE_plots'))
     pass
