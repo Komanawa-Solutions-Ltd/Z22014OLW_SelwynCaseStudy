@@ -71,7 +71,12 @@ def get_dreamz(site, rerun=False):
     ndata = get_all_n_data()
     data = get_n_metadata()
     data = data.loc[site]
-    ndata = ndata.loc[(ndata.site_id == site) & ~ndata.always_exclude].set_index('datetime').sort_index()['n_conc']
+    if 'Hart' in site:
+        idx = (ndata.site_id == site) & ~ndata.always_exclude & ~ndata.unsup_outlier_auto
+    else:
+        idx = (ndata.site_id == site) & ~ndata.always_exclude
+
+    ndata = ndata.loc[idx].set_index('datetime').sort_index()['n_conc']
 
     mrt = mrt_p1 = data['age_mean']
     f_p1 = data['f_p1']
@@ -140,10 +145,10 @@ def run_all_mp(rerun=False):
     for site in sites:
         runs.append(dict(site=site, rerun=rerun))
     run_multiprocess(_get_dreamz_mp, runs, subprocess_cores=nchains)
+    for site in sites:
+        plot_base(site, outdir=project_dir.joinpath('BASE_plots'))
 
 
 if __name__ == '__main__':
     run_all_mp()
-    for site in sites:
-        plot_base(site, outdir=project_dir.joinpath('BASE_plots'))
     pass
