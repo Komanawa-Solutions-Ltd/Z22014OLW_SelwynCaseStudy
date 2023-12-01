@@ -72,7 +72,8 @@ def get_dreamz(site, rerun=False):
     data = get_n_metadata()
     data = data.loc[site]
     if 'Hart' in site:
-        idx = (ndata.site_id == site) & ~ndata.always_exclude & ~ndata.unsup_outlier_auto
+
+        idx = (ndata.site_id == site) & ~ndata.always_exclude & ~ndata.unsup_outlier_auto.astype(bool)
     else:
         idx = (ndata.site_id == site) & ~ndata.always_exclude
 
