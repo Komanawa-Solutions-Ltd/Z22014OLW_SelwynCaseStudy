@@ -84,12 +84,12 @@ def get_dreamz(site, rerun=False):
     model_name = f'{site}_BASE'
     precision = 2
     if mrt < 5:
-        break_freq = '30D'  # approximately monthly
+        break_freq = 'A'  # approximately monthly
         precision = 3
     elif mrt < 20:
-        break_freq = '182D'  # approximately half annually
+        break_freq = 'A'  # approximately half annually
     else:
-        break_freq = 'A'
+        break_freq = '2A'
 
     dbs = DreamzsBpefmSolver(save_dir=run_dir, n_inflections=break_freq,
                              ts_data=ndata,
@@ -110,18 +110,16 @@ def get_dreamz(site, rerun=False):
 
 
 def plot_base(site, outdir):
+    data = get_n_metadata().loc[site]
+    mrt = data['age_mean']
+    f_p1 = data['f_p1']
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
     dbs, model_name = get_dreamz(site)
-    fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.05)
-    ax[0].set_xlim(pd.to_datetime('2000-01-01'), pd.to_datetime('2025-01-01'))
+    fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.05, sharey=False,
+                                        title_additon=f'\n{mrt=}, {f_p1=}')
     fig.tight_layout()
     fig.savefig(outdir.joinpath(f'{model_name}_pred.png'))
-
-    fig, ax = dbs.plot_best_params(model_name=model_name, nplot=0.10)
-    ax.set_xlim(pd.to_datetime('2000-01-01'), pd.to_datetime('2025-01-01'))
-    fig.tight_layout()
-    fig.savefig(outdir.joinpath(f'{model_name}_params.png'))
 
 
 def run_all(rerun=False):
@@ -147,6 +145,7 @@ def run_all_mp(rerun=False):
         runs.append(dict(site=site, rerun=rerun))
     run_multiprocess(_get_dreamz_mp, runs, subprocess_cores=nchains)
     for site in sites:
+        print(f'plotting {site}')
         plot_base(site, outdir=project_dir.joinpath('BASE_plots'))
 
 
