@@ -91,7 +91,7 @@ def get_dreamz(site, rerun=False):
     else:
         break_freq = 'A'
 
-    dbs = DreamzsBpefmSolver(save_dir=base_dir, n_inflections=break_freq,
+    dbs = DreamzsBpefmSolver(save_dir=run_dir, n_inflections=break_freq,
                              ts_data=ndata,
                              inflection_times=None, cdf_inflection_start=0.05,
                              mrt=mrt, mrt_p1=mrt_p1, mrt_p2=None, frac_p1=1, f_p1=f_p1,
