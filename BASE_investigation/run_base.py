@@ -149,6 +149,12 @@ def run_all_mp(rerun=False):
         plot_base(site, outdir=project_dir.joinpath('BASE_plots'))
 
 
+# todo autocorrelated data
+# https://stackoverflow.com/questions/33898665/python-generate-array-of-specific-autocorrelation
+# https://oscarnieves100.medium.com/simulating-correlated-random-variables-in-python-c3947f2dbb10
+# markov chain?
+# https://stats.stackexchange.com/questions/29239/creating-auto-correlated-random-values-in-r
+# todo could simulate a start value and a rate of change (e.g. normal distribtion centered on 0). and add that
 if __name__ == '__main__':
     run_all_mp()
     pass
