@@ -16,11 +16,14 @@ created with api
 # use tmux
 #tmux new -s [session_name]
 conda activate OLW2
+cd ~/PycharmProjects/modflow_tools_olw
+git fetch --all
+git reset --hard origin/main
 cd ~/PycharmProjects/Z22014OLW_SelwynCaseStudy
 git fetch --all
 git reset --hard origin/main
 # -u for unbuffered output, note calling conda run python -u [scriptname].py does not work
-PYTHONPATH="$PYTHONPATH:$PWD" python -u [scriptname].py
+PYTHONPATH="$PYTHONPATH:$PWD:~/PycharmProjects/modflow_tools_olw" python -u [scriptname].py
 
 # disconnect tmux session
 ctrl+b d
