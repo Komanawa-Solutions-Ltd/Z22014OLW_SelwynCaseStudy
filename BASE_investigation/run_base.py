@@ -84,12 +84,12 @@ def get_dreamz(site, rerun=False):
     model_name = f'{site}_BASE'
     precision = 2
     if mrt < 5:
-        break_freq = 'A'  # approximately monthly
+        break_freq = '2A'
         precision = 3
     elif mrt < 20:
-        break_freq = 'A'  # approximately half annually
-    else:
         break_freq = '2A'
+    else:
+        break_freq = '5A'
 
     dbs = DreamzsBpefmSolver(save_dir=run_dir, n_inflections=break_freq,
                              ts_data=ndata,
