@@ -3,6 +3,7 @@ created matt_dumont
 on: 24/11/23
 """
 
+# todo
 import tempfile
 import traceback
 import datetime
@@ -13,16 +14,16 @@ from solvers.DreamzsBPEFM import DreamzsBpefmSolver
 from pydream.parameters import SampledParam
 from scipy.stats import uniform
 from run_managers.run_multiprocess import run_multiprocess
-
+from generators.normal_path_change import NormalPath
 from site_selection.get_n_data import get_n_metadata, plot_single_site, get_all_n_data
 import geopandas as gpd
 from project_base import unbacked_dir, project_dir
 
 base_dir = unbacked_dir.joinpath('BASE')
 base_dir.mkdir(exist_ok=True)
-run_dir = base_dir.joinpath('runs')
+run_dir = base_dir.joinpath('runs_normpath')
 run_dir.mkdir(exist_ok=True)
-logdir = base_dir.joinpath('logs')
+logdir = base_dir.joinpath('logs_normpath')
 logdir.mkdir(exist_ok=True)
 nchains = 5
 sites = [
@@ -83,12 +84,17 @@ def get_dreamz(site, rerun=False):
     model_name = f'{site}_BASE'
     precision = 2
     if mrt < 5:
-        break_freq = '2A'
+        break_freq = '60D'
         precision = 3
     elif mrt < 20:
-        break_freq = '2A'
+        break_freq = '90D'
     else:
-        break_freq = '5A'
+        break_freq = '180D'
+
+    if site in ['l36_0317', 'm36_4126']:
+        start_bounds = (2, 10)
+    else:
+        start_bounds = (0.1, 5)
 
     dbs = DreamzsBpefmSolver(save_dir=run_dir, n_inflections=break_freq,
                              ts_data=ndata,
@@ -97,13 +103,14 @@ def get_dreamz(site, rerun=False):
                              f_p2=0.5,  # dummy
                              precision=precision)
 
-    params = SampledParam(uniform, 0.1, 20)
+    params = [SampledParam(NormalPath, start_bounds, 0.1, 20, 1, dbs.n_inflections)]
 
     sampled_params, log_ps = dbs.run_dreamzs(
         model_name=model_name,
         params=params,
         niterations=10000, nchains=nchains, starts=None, verbose=True,
-        nverbose=100, restart=False, start_random=True, hardboundaries=True, multitry=False, rerun=rerun)
+        nverbose=100, restart=False, start_random=True, hardboundaries=True, multitry=False, rerun=rerun,
+    )
 
     return dbs, model_name
 
@@ -115,7 +122,7 @@ def plot_base(site, outdir):
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
     dbs, model_name = get_dreamz(site)
-    fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.05, sharey=False,
+    fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.2, sharey=False,
                                         title_additon=f'\n{mrt=}, {f_p1=}')
     fig.tight_layout()
     fig.savefig(outdir.joinpath(f'{model_name}_pred.png'))
@@ -145,10 +152,9 @@ def run_all_mp(rerun=False):
     run_multiprocess(_get_dreamz_mp, runs, subprocess_cores=nchains)
     for site in sites:
         print(f'plotting {site}')
-        plot_base(site, outdir=project_dir.joinpath('BASE_plots'))
+        plot_base(site, outdir=project_dir.joinpath('BASE_plots_normpath'))
 
 
-# autocorrelated looks much better
 if __name__ == '__main__':
     run_all_mp()
     pass

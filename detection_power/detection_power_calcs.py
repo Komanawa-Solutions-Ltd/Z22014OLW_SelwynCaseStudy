@@ -367,7 +367,7 @@ def copy_to_gdrive():
 
 test_dcp = False
 ncores = None
-if __name__ == '__main__': # todo run/check
+if __name__ == '__main__':
 
     make_no_trend_meta_data()
     make_check_all_detection_powers(False)
