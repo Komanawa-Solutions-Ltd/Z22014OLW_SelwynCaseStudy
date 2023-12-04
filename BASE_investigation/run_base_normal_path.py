@@ -119,11 +119,13 @@ def plot_base(site, outdir):
     data = get_n_metadata().loc[site]
     mrt = data['age_mean']
     f_p1 = data['f_p1']
+    depth = data['depth']
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
     dbs, model_name = get_dreamz(site)
     fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.2, sharey=False,
-                                        title_additon=f'\n{mrt=}, {f_p1=}')
+                                        title_additon=f'\n{depth=} m {mrt=} yr, {f_p1=}', percentiles=(5, 25),
+                                        pdf_alpha=0.25, plot_annual_vlines=True, plot_inflection_points=False)
     fig.tight_layout()
     fig.savefig(outdir.joinpath(f'{model_name}_pred.png'))
 
