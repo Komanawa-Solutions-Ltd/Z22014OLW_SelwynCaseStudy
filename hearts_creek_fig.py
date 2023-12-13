@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from detection_power.detection_power_calcs import get_trend_detection_power, get_trend_detection_power_no_noise, \
     get_no_trend_detection_power_no_noise, get_no_trend_detection_power, samp_durs, samp_freqs, get_plateau_power, \
     get_all_plateau_sites
+from detection_power.detection_power_calcs import samp_durs as org_sample_durs
 from site_selection.get_n_data import get_n_metadata, get_final_sites, sw_ages
 from generate_true_concentration.gen_true_slope_init_conc import plot_single_site_source_recept, \
     get_site_true_recept_conc, get_site_true_recept_conc_no_change
@@ -88,7 +89,7 @@ def plot_variable_mrt(base_site, reduction=0.2):
         handles.append(t[0])
         labels.append(f'{label_site}: Receptor, no red.')
 
-        plt_data = [detect_noisy.loc[f'{site}_{d}_{nsamp}', 'power'] for d in samp_durs]
+        plt_data = [detect_noisy.loc[f'{site}_{d}_{nsamp}_{20}', 'power'] for d in samp_durs]
         power_ax.plot(use_samp_durs, plt_data, marker='o', label=f'{label_site}: {nsamp} samples/yr', c=color)
 
     ax.axvline(pd.to_datetime(f'{start_year}-01-01'), ls=':', color='k', alpha=0.5)
@@ -104,7 +105,7 @@ def plot_variable_mrt(base_site, reduction=0.2):
     power_ax.axvline(pd.to_datetime(f'{start_year}-01-01'), ls=':')
     power_leg.legend(*power_ax.get_legend_handles_labels(), loc='upper left')
     power_ax.set_xlim(pd.to_datetime('2000-01-01'), pd.to_datetime('2045-01-01'))
-    fig.suptitle(f'Affect of MRT on detection power at {base_site} Reduction={reduction * 100}%')
+    fig.suptitle(f'Effect of MRT on detection power at {base_site} Reduction={reduction * 100}%')
     fig.supxlabel('Time (years)')
     fig.tight_layout()
     return fig
