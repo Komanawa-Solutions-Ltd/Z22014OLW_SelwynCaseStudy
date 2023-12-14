@@ -1,0 +1,72 @@
+%! Author = matt_dumont
+%! Date = 14/12/23
+
+\section[Methods]{Study Methodology}   \label{sec:methods}
+
+\subsection[Data]{Receptors, Data processing, and analysis} \label{sec:data}
+
+\gls{ecan} provided us with \gls{no3n} concentration data for approximately 100 sites which included groundwater monitoring wells, spring fed streams and the Selwyn Waikirikiri River at Coes Ford. The Selwyn Waikirikiri River has both hill fed and spring fed components, but in the lower catchment it is a gaining stream and the low flows are dominated by spring fed flow. We worked collaboratively with \gls{ecan} to select a subset of sites for analysis. The raw data and all outputs are available in the \gls{proj_repo} and a summary table of the data is available in  % todo add an appendix
+Groundwater age data (\gls{mrt} and age distribution parameters) were provided by both \gls{ecan} and \gls{olw}.
+
+The data was processed as follows:
+\begin{enumerate}
+    \item \textbf{\gls{no3n} Outlier Identification}: we identified two types of outliers (see \autoref{fig:ex_outlier_trend}):
+    \begin{enumerate}
+        \item  True outliers: values which based on a statistical and visual analysis were clearly outside the expected range of values for the site. These values were removed from the dataset.
+        \item Trend outliers: data which precede the most recent / current trend and could erroneously affect the fit of the current historical trend. These values were not included in the historical trend analysis or \gls{no3n} noise estimation.
+    \end{enumerate}
+    \item \textbf{Estimate the age distribution, wells}: where sites did not have assessed groundwater age distributions we estimate the parameters from nearby sites. The method was somewhat manual and was often site specific. Details on how we estimated the age distribution for each site are available in the \gls{proj_repo}.
+    \item \textbf{Estimate the age distribution, streams}: There were no age estimates for the spring fed streams; therefore we assessed the detection power assuming a range \gls{mrt}, 5, 10, 20, and 30 years. The other age model parameters were assumed to be the median of all sites within (7.5 or 10 km) and <=10m depth. Further details are available in the \gls{proj_repo}
+\end{enumerate}
+
+\kslfig {0.90\textwidth}{figures/m36_8187}{Site M36/8187: note the "true" outliers (black) and the trend outliers(red)}{ex_outlier_trend}
+
+
+\subsection[Pathways]{\textit{A. priori} Pathways} \label{subsec:apriori}
+
+In consultations with \gls{ecan} we generated the following \textit{a. priori} pathways for the implementation of \gls{no3n} reductions:
+\begin{itemize}
+    \item \textbf{No change}: no change in \gls{no3n} source concentrations.
+    \item \textbf{5\% reduction}: a 5\% reduction in \gls{no3n} source concentrations implemented linearly between 2017 and 2022.
+    \item \textbf{10\% reduction}: a 10\% reduction in \gls{no3n} source concentrations implemented linearly between 2017 and 2022.
+    \item \textbf{20\% reduction}: a 20\% reduction in \gls{no3n} source concentrations implemented linearly between 2017 and 2022.
+    \item \textbf{30\% reduction}: a 30\% reduction in \gls{no3n} source concentrations implemented linearly between 2017 and 2022.
+\end{itemize}
+
+While \gls{pc1} specifies the reductions, it does not apply to all land parcels. The source zones for many wells and spring fed streams are poorly constrained. Providing multiple pathways provides an efficient mechanisms to explore the potential impact of different source zones and mitigation effectiveness. A higher than expected reduction pathway was provided to explore the potential impact of a more effective than expected implementation of \gls{pc1}.
+
+\subsection[Detection Power Methods] {Detection Power Methods} \label{subsec:detection_power_methods}
+
+The method to calculate the detection power of a given site was implemented after % todo cite my paper
+using our open source package. % todo cite my package
+Briefly the methodology is as follows for each site:
+\begin{enumerate}
+    \item Ascertain whether the historical concentration data has a statistically robust trend (e.g. via a Mann-Kendall test, see \autoref{fig:ex_outlier_trend})
+    \item Estimate the noise in the receptor concentration time series
+    \begin{enumerate}
+        \item If the historical concentration data has an increasing statistically robust trend, then the noise can be estimated as the standard deviation of the residuals from a model (e.g. a linear regression or Sen-slope/ Sen-intercept).
+        \item If the historical concentration data does not have a statistically robust trend, then the noise can be estimated as the standard deviation of the receptor concentration time series.
+        \item If the historical concentration data has a statistically robust decreasing trend, we assumed that the receptor was at steady state and considered the site in the same fashion as a site with no statistically robust trend.
+    \end{enumerate}
+    \item Estimate the source concentration from the historical trend (if any) and the groundwater age distribution.
+    \item Predict the true receptor concentration time series (e.g., the concentration at the receptor if there was no noise) based on the aforementioned source concentration, \textit{a priori} pathway and the groundwater age distribution.
+    \item Resample the true receptor concentration time series to the desired sampling frequency and duration (e.g., quarterly sampling for 10 years).
+    \item Calculate the statistical probability of detecting the change
+    \begin{enumerate}
+        \item generate a synthetic sample of the receptor noise (e.g., by sampling a normal distribution)
+        \item add the synthetic noise to the true receptor concentration time series
+        \item conduct a statistical test (here we used a Mann-Kendall test or a Multipart Mann Kendall test) to determine if the synthetic receptor concentration time series has a statistically robust trend
+        \item repeat steps a-c many times (we used 1000 iterations). The probability of detecting the change is the number of times the synthetic receptor concentration time series had a statistically robust trend divided by the number of iterations.
+    \end{enumerate}
+\end{enumerate}
+
+The source concentration was estimated by fitting a simple source to receptor model. The source concentration was set via a parameterised trend and minimum value and then the source concentration was transformed to the receptor concentration via the \gls{epfm}. \autoref{fig:source_ex} provides an example of the source concentration estimation. Site M36/0698 has a statistically robust increasing trend, approximate 0.12 mg/l \gls{no3n}. Given the \gls{mrt} of 22.75 years the best fit of the data (solid gold line) suggests that the peak source concentration is likely c. 7 mg/l \gls{no3n} (dashed gold line). More details on this process are available in % todo cite my paper  and gw age tools repos
+
+\kslfig {.95\textwidth}{figures/m36_0698_red20_true_conc}{Site M36/0698 as an example of the source concentration prediction}{source_ex}
+
+For the statistical test we used:
+\begin{itemize}
+    \item A \textbf{Mann-Kendall test} for sites without a historical increasing trend
+    \item A \textbf{Multipart Mann-Kendall test} for sites with a historical increasing trend. We used a Multipart Mann-Kendall test here as a historically increasing trend can continue after the implementation of \gls{pc1}, due to historical increases in \gls{no3n} source concentrations which have not reached steady state at the receptor. A traditional Mann-Kendall test would require the absolute knowledge of the time of the maximum \gls{no3n} receptor concentration. A Multipart Mann-Kendall test does not require this knowledge. For more information see % todo cite my mpmk repo
+\end{itemize}
+

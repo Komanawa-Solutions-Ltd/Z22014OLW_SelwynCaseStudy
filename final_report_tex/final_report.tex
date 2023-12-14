@@ -1,0 +1,344 @@
+%! Author = matt_dumont
+%! Date = 4/12/23
+
+%----------------------------------------------------------------------------------------
+% set document class
+\documentclass[11pt]{article}
+%----------------------------------------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%-----------------------------------%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	REPORT INFORMATION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\reporttitle}{The Power of the Current Monitoring Network to Detect Nitrate Reductions in the Selwyn Waihora Zone}
+
+\newcommand{\projcode}{Z22014OLW}
+\newcommand{\nthreport}{4}
+\newcommand{\projectname}{Selwyn Waihora Detection Power}
+
+
+\newcommand\authors{
+    \textbf{Matt Dumont:} \textit{Lead Computational Hydrogeologist, Kōmanawa Solutions Ltd}\\\\
+    \textbf{Zeb Etheridge:} \textit{Director \& Principal Water Resource Scientist, Kōmanawa Solutions Ltd}\\\\
+}
+
+\newcommand\authorcite{Dumont and Etheridge}
+
+\newcommand\client{Environment Canterbury}
+\newcommand\reportstartdate{01/09/2023}
+\newcommand\reportenddate{\today}
+
+% DRAFT WATERMARK %todo RM THIS FOR FINAL
+\usepackage{draftwatermark}
+\SetWatermarkScale{5}
+\SetWatermarkLightness{0.9}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%-----------------------------------%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	DOCUMENT PREAMBLE / SETUP
+%----------------------------------------------------------------------------------------
+% Packages
+%----------------------------------------------------------------------------------------
+\usepackage[sfdefault]{carlito} % Use the Carlito font
+\graphicspath{{figures/}{./}{ksl_fig/}} % Specifies where to look for included images (trailing slash required)
+\usepackage[table]{xcolor}
+\usepackage{array}
+\usepackage{xstring}
+\usepackage{lipsum}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[title,titletoc,toc]{appendix} % Required for the appendices section
+\usepackage{titletoc} % Required for manipulating the table of contents
+\usepackage{booktabs} % Required for nicer horizontal rules in tables
+\usepackage{amssymb} % Required for some math elements
+\usepackage{mathtools} % Required for some math elements
+\usepackage[ddmmyyyy]{datetime} % Sets date format to yyyy-mm-dd
+\usepackage{geometry} % Required for adjusting page dimensions and margins
+\usepackage{titlesec} % Required for manipulating the section titles
+\usepackage[skins, most, many, listings]{tcolorbox} % create breakaway boxes
+\usepackage[backref]{hyperref} % Required for adding links and customizing them
+\usepackage{enumitem, datatool} % Required for sorted list % Required for list customization
+\usepackage[labelfont=bf]{caption}
+\usepackage{fancyhdr} % Required for custom headers and footers
+\usepackage{scrextend} % Required for indenting paragraphs
+\usepackage{glossaries-extra}
+\usepackage{etoolbox}
+\usepackage{ksl_fig/kslfigure}
+\usepackage{natbib}
+
+%----------------------------------------------------------------------------------------
+% GLOSSARY SETUP
+%----------------------------------------------------------------------------------------
+\makeglossaries  %keynote if glossery isn't made then check run configurations and ensure makeglosseries is enabled as an extension
+\setabbreviationstyle[acronym]{short-long}
+\GlsXtrEnableEntryCounting
+{acronym}% list of categories to use entry counting
+{3}% trigger value (only add to glossary if count > 3)
+\input{custom_sections/list_abrev_def}
+
+%-----------------------------------------------------------------------------------------
+% CUSTOM COLORS
+%-----------------------------------------------------------------------------------------
+\definecolor{ksldarkblue}{RGB}{49,83,125}
+\definecolor{ksllightblue}{RGB}{64,163,219}
+\definecolor{kslvlblue}{RGB}{215,236,247}
+%----------------------------------------------------------------------------------------
+% HYPERLINK SETUP
+%----------------------------------------------------------------------------------------
+\hypersetup{
+    colorlinks,
+    linkcolor={ksldarkblue},
+    citecolor={red!80!black},
+    urlcolor={blue!80!black}
+}
+
+%----------------------------------------------------------------------------------------
+% define breakaway box
+\newtcolorbox[auto counter,number within=section,list inside=bab]{breakawaybox}[2][]{
+    enhanced,colframe=ksldarkblue,colback=kslvlblue,fonttitle=\bfseries,
+    colbacktitle=ksllightblue, coltitle=black,center title,
+    title=Box~\thetcbcounter: #2,#1}
+
+\makeatletter
+\newcommand\tcb@cnt@breakawayboxautorefname{Box}
+\makeatother
+
+
+%----------------------------------------------------------------------------------------
+%	MARGINS and SPACING
+%----------------------------------------------------------------------------------------
+\setlength{\parindent}{0pt} % Paragraph indentation
+\setlength{\parskip}{10pt} % Vertical space between paragraphs
+\setcounter{tocdepth}{2} % Show entries in the table of contents down to subsections
+\geometry{
+    a4paper,
+    total={170mm,257mm},
+    left=20mm,
+    top=20mm,
+}
+%----------------------------------------------------------------------------------------
+% heading enumeration and spacing etc.
+%----------------------------------------------------------------------------------------
+\setcounter{secnumdepth}{4} % Number headings down to subparagraphs (level 5),
+\setcounter{tocdepth}{4} % Show headings down to subparagraphs (level 5) in the table of contents
+
+% set all section headings to ksl dark blue
+\titleformat{\section}
+{\normalfont\Large\bfseries\color{ksldarkblue}}{\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\normalfont\large\bfseries\color{ksldarkblue}}{\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+{\normalfont\normalsize\bfseries\color{ksldarkblue}}{\thesubsubsection}{1em}{}
+
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries\color{ksldarkblue}}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}{\parindent}{3.25ex plus 1ex minus .2ex}{.75ex plus .1ex}
+
+\titleformat{\subparagraph}
+{\normalfont\normalsize\bfseries\slshape\color{ksldarkblue}}{\thesubparagraph}{1em}{}
+\titlespacing*{\subparagraph}{\parindent}{3.25ex plus 1ex minus .2ex}{.75ex plus .1ex}
+
+%----------------------------------------------------------------------------------------
+% Table formatting
+%----------------------------------------------------------------------------------------
+\NewTblrTheme{fancy_tab}{
+    \SetTblrStyle{caption-tag}{font=\bfseries},
+
+
+}
+\NewTblrEnviron{ksltable}
+\SetTblrOuter[ksltable]{}
+\SetTblrInner[ksltable]{
+    rowhead = 1,
+    hlines, %horizontal lines
+    row{odd} = {kslvlblue}, % alternate row colors
+    row{even} = {white}, % alternate row colors
+    row{1} = {font=\bfseries, ksldarkblue, fg=white}, % header row
+}
+
+\NewTblrEnviron{ksltablelong}
+\SetTblrOuter[ksltablelong]{long, theme=fancy_tab}
+\SetTblrInner[ksltablelong]{
+    rowhead = 1,
+    hlines, %horizontal lines
+    vlines,
+    row{odd} = {kslvlblue}, % alternate row colors
+    row{even} = {white}, % alternate row colors
+    row{1} = {font=\bfseries, ksldarkblue, fg=white}, % header row
+}
+
+%----------------------------------------------------------------------------------------
+% Figure, table, equation numbering scheme
+%----------------------------------------------------------------------------------------
+\numberwithin{equation}{section} % Number equations within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+\numberwithin{figure}{section} % Number figures within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+\numberwithin{table}{section} % Number tables within sections (i.e. 1.1, 1.2, 2.1, 2.2 instead of 1, 2, 3, 4)
+
+%----------------------------------------------------------------------------------------
+% set section/appendix autoref names
+%----------------------------------------------------------------------------------------
+\def\sectionautorefname{Section}
+\def\subsectionautorefname{Section}
+\def\subsubsectionautorefname{Section}
+\def\paragraphautorefname{Section}
+\def\subparagraphautorefname{Section}
+\def\appendixautorefname{Appendix}
+
+%----------------------------------------------------------------------------------------
+% appendix autoref patch from https://tex.stackexchange.com/questions/149807/autoref-subsections-in-appendix
+%----------------------------------------------------------------------------------------
+
+\makeatletter
+\patchcmd{\hyper@makecurrent}{%
+    \ifx\Hy@param\Hy@chapterstring
+    \let\Hy@param\Hy@chapapp
+    \fi
+}{%
+    \iftoggle{inappendix}{%true-branch
+    % list the names of all sectioning counters here
+        \@checkappendixparam{chapter}%
+        \@checkappendixparam{section}%
+        \@checkappendixparam{subsection}%
+        \@checkappendixparam{subsubsection}%
+        \@checkappendixparam{paragraph}%
+        \@checkappendixparam{subparagraph}%
+    }{}%
+}{}{\errmessage{failed to patch}}
+
+\newcommand*{\@checkappendixparam}[1]{%
+    \def\@checkappendixparamtmp{#1}%
+    \ifx\Hy@param\@checkappendixparamtmp
+    \let\Hy@param\Hy@appendixstring
+    \fi
+}
+\makeatletter
+
+\newtoggle{inappendix}
+\togglefalse{inappendix}
+
+\apptocmd{\appendix}{\toggletrue{inappendix}}{}{\errmessage{failed to patch}}
+\apptocmd{\subappendices}{\toggletrue{inappendix}}{}{\errmessage{failed to patch}}
+% end appendix autoref patch
+
+
+%----------------------------------------------------------------------------------------
+% define inline equation
+%----------------------------------------------------------------------------------------
+\makeatletter
+\newcommand*{\inlineequation}[2][]{%
+    \begingroup
+    % Put \refstepcounter at the beginning, because
+    % package `hyperref' sets the anchor here.
+    \refstepcounter{equation}%
+    \ifx\\#1\\%
+    \else
+    \label{#1}%
+    \fi
+    % prevent line breaks inside equation
+    \relpenalty=10000 %
+    \binoppenalty=10000 %
+    \ensuremath{%
+    % \displaystyle % larger fractions, ...
+        #2%
+    }%
+    ~\@eqnnum
+    \endgroup
+}
+\makeatother
+
+%----------------------------------------------------------------------------------------
+% define get year from date
+\def\getYear#1{\StrRight{#1}{4}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%-----------------------------------%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Start the Document
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+%	DEFAULT SECTIONS (import default_sections here), should not need to change
+%----------------------------------------------------------------------------------------
+    % Title page
+    \input{default_sections/title_page}
+
+%---------------------------------------------------------------------------------------
+% footer/header
+%---------------------------------------------------------------------------------------
+    \pagestyle{fancy}
+    \fancyhead{}\fancyfoot{}
+    % header
+    \fancyhead[L]{\includegraphics[width=18mm]{figures/template_figs/ksl_for_latex_justlogo}}
+    % footer
+    \renewcommand{\footrulewidth}{0.4pt}
+    \fancyfoot[L]{\textbf{\thepage}~\textbar~KSL}
+    \fancyfoot[R]{\reporttitle}
+    \pagenumbering{roman} % set page numbering to roman numerals for intro pages
+
+    % About page
+    \input{default_sections/about_page}
+
+    % executive summary
+    \input{custom_sections/executive_summary}
+    \newpage
+
+%---------------------------------------------------------------------------------------
+%%	Table of contents SECTIONS %todo comment out if you don't want these
+%---------------------------------------------------------------------------------------
+
+    % Table of contents
+    \phantomsection % add to toc (make the link go to the right location)
+    \addcontentsline{toc}{section}{Contents} % add to toc
+    \tableofcontents
+
+    % toc of figures
+    \phantomsection % add to toc (make the link go to the right location)
+    \addcontentsline{toc}{subsection}{List of Figures} % add to toc
+    \listoffigures
+
+    % toc of tables
+    \phantomsection % add to toc (make the link go to the right location)
+    \addcontentsline{toc}{subsection}{List of Tables} % add to toc
+    \listoftables
+
+    % TOC of breakaway boxes based on last entry of
+    %    https://tex.stackexchange.com/questions/86711/tcolorbox-list-of-listings
+    \phantomsection % add to toc (make the link go to the right location)
+    \addcontentsline{toc}{subsection}{Table of Breakaway Boxes} % add to toc
+    \tcblistof[\section*]{bab}{List of Breakaway Boxes}
+
+    % List of abbreviations/definitions
+    \addcontentsline{toc}{subsection}{Definitions and Abreviations} \label{sec:defs}
+    \printglossary[title=Definitions and Abreviations, nonumberlist]
+
+    \newpage
+
+%---------------------------------------------------------------------------------------
+% footer/header
+%---------------------------------------------------------------------------------------
+    % add more to the header
+    \fancyhead[C]{\leftmark}
+    \fancyhead[R]{\rightmark}
+    \setcounter{page}{1} % reset page counter
+    \pagenumbering{arabic} % set page numbering to arabic numerals for main pages
+%---------------------------------------------------------------------------------------
+    % custom_sections
+%---------------------------------------------------------------------------------------
+    \input{custom_sections/Introduction}
+    \input{custom_sections/methodology}
+    \input{custom_sections/results}
+    \input{custom_sections/discussion}
+    \input{custom_sections/conclustions}
+
+%---------------------------------------------------------------------------------------
+% BIBLIOGRAPHY
+%---------------------------------------------------------------------------------------
+
+    \newpage
+    \phantomsection % add to toc (make the link go to the right location)
+    \addcontentsline{toc}{section}{References} % add to toc
+    % todo \bibliographystyle{apalike}
+    % todo \bibliography{main}
+
+\end{document}

@@ -1,0 +1,24 @@
+%! Author = matt_dumont
+%! Date = 7/12/23
+\begin{wraptable}{R}{0.6\textwidth}
+    \centering
+    \caption{Wrapped test Title}
+    \label{tab:wrapdummy1}
+    \begin{ksltable}[
+    ]{
+        colspec = {|c|c|c|c|c|},
+    }
+        \SetCell[r=2]{c} 2 Rows
+        & \SetCell[c=2]{c} 2 Columns
+        & & \SetCell[r=2,c=2]{c} 2 Rows 2 Columns & \\
+        & 2-2 & 2-3 &     &     \\
+        3-1 & 3-2 & 3-3 & 3-4 & 3-5 \\
+        3-1 & 3-2 & 3-3 & 3-4 & 3-5 \\
+        \SetCell[r=2]{c} 2 Rows
+        & \SetCell[c=2]{c} 2 Columns
+        & & \SetCell[r=2,c=2]{c} 2 Rows 2 Columns & \\
+        & 2-2 & 2-3 &     &     \\
+        3-1 & 3-2 & 3-3 & 3-4 & 3-5 \\
+        3-1 & 3-2 & 3-3 & 3-4 & 3-5 \\
+    \end{ksltable}
+\end{wraptable}

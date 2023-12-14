@@ -1,0 +1,43 @@
+%! Author = matt_dumont
+%! Date = 11/12/23
+
+% Preamble
+\documentclass[11pt]{article}
+
+% Packages
+\usepackage{amsmath}
+\usepackage{lipsum}
+%\usepackage{subcaption}
+\usepackage{kslfigure}
+\usepackage{hyperref}
+\newcommand\client{CLIENT NAME}
+\newcommand\reportenddate{\today}
+\newcommand{\projectname}{Project Name something somewha}
+
+% Document
+\begin{document}
+
+    \autoref{fig:xkcd} reference a figure
+    \autoref{fig:xkcd2} reference a figure2
+    \autoref{fig:xkcd3} reference a wrap figure
+
+    \lipsum[1]
+
+
+    \section{KSL figure}
+
+    \kslfig[H]{0.8\textwidth}{xkcd1}{statistical error type}{xkcd}
+
+    \lipsum[1]
+
+
+    \lipsum[1-3]
+    \kslfig[H]{0.5\textwidth}{xkcd1}{A clear and present example of statistical error type}{xkcd2}
+
+    \newpage
+    \section[wrapfig]{Wrapped figure}
+    \kslwrapfig[R]{0.4\textwidth}{xkcd1}{wrap:statistical error types}{xkcd3}
+    \lipsum[1-3]
+    \lipsum[1-3]
+
+\end{document}

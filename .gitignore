@@ -164,3 +164,7 @@ cython_debug/
 
 # ubuntu lock files
 *.~lock.*
+
+
+# LaTeX output directory
+out/*

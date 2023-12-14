@@ -1,0 +1,90 @@
+%%Identification
+%%The package identifies itself and the LaTeX version needed
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ksl_fig/kslfigure}[2019/12/23 KSL figure package]
+\RequirePackage[export]{adjustbox}
+\RequirePackage{graphicx}
+\RequirePackage{multirow}
+\RequirePackage{wrapfig}
+\RequirePackage{tabularray}
+\RequirePackage{float}
+
+%%Requeiried packages and preliminary definitions, needed by the options
+% keynote requires passing of \projectname \client \reportenddate
+
+\newlength{\kslfigwidth}
+
+% KSL FIGURE
+\newcommand{\kslfig}[5][h]
+% #1 = placement, default = h
+%     Parameter	Position
+%     h	Place the float here, i.e., approximately at the same point it occurs in the source text (however, not exactly at the spot)
+%     t	Position at the top of the page.
+%     b	Position at the bottom of the page.
+%     p	Put on a special page for floats only.
+%     !	Override internal parameters LaTeX uses for determining "good" float positions.
+%     H	Places the float at precisely the location in the LATEX code. Requires the float package, though may cause problems occasionally. This is somewhat equivalent to h!.
+% #2 = width
+% #3 = image path
+% #4 = caption
+% #5 = label label = (fig:label)
+{
+    \setlength{\kslfigwidth}{#2}
+    \begin{figure}[#1]
+        \center
+        \begin{adjustbox}{varwidth=\kslfigwidth,margin=5 5 5 5, frame=1pt}
+            \includegraphics[width=\kslfigwidth]{#3}
+            \hrule
+            \caption{#4}
+            \label{fig:#5}
+            %KSL branding and client/project info here
+            \scriptsize
+            \hrule
+            \begin{tblr}{
+                colspec = {m{0.20\kslfigwidth} | m{0.70\kslfigwidth}},
+            }
+                \includegraphics[width=0.18\kslfigwidth,valign=m]{ksl_worm}
+                & \textbf{Project}: \projectname \newline
+                \textbf{Client}: \client       \newline
+                \textbf{Date}: \reportenddate\\
+            \end{tblr}
+        \end{adjustbox}
+    \end{figure}
+}
+
+
+% KSL WRAP FIGURE
+\newcommand{\kslwrapfig}[5][L]
+% #1 = placement {r,R,l,L,i,I,o,O} default = L
+%     r	R	right side of the text
+%     l	L	left side of the text
+%     i	I	inside edge–near the binding (in a twoside document)
+%     o	O	outside edge–far from the binding
+%     The uppercase version allows the figure to float. The lowercase version means exactly here.
+% #2 = width
+% #3 = image path
+% #4 = caption
+% #5 = label label = (fig:{label})
+{
+    \setlength{\kslfigwidth}{#2}
+    \begin{wrapfigure}{#1}{1.1\kslfigwidth} %this figure will be at the left
+        \center
+        \begin{adjustbox}{varwidth=\kslfigwidth,margin=5 5 5 5, frame=1pt}
+            \includegraphics[width=\kslfigwidth]{#3}
+            \hrule
+            \caption{#4}
+            \label{fig:#5}
+            %KSL branding and client/project info here
+            \scriptsize
+            \hrule
+            \begin{tblr}{
+                colspec = {m{0.20\kslfigwidth} | m{0.70\kslfigwidth}},
+            }
+                \includegraphics[width=0.18\kslfigwidth,valign=m]{ksl_worm}
+                & \textbf{Project}: \projectname \newline
+                \textbf{Client}: \client       \newline
+                \textbf{Date}: \reportenddate\\
+            \end{tblr}
+        \end{adjustbox}
+    \end{wrapfigure}
+}

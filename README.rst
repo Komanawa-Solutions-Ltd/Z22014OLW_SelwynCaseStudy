@@ -15,7 +15,7 @@ Detection Power Analysis of Plan Change 1 in the Selwyn District, New Zealand
 :Version:  1.0.0
 :Status:  Final
 :KSL project: Z22014OLW_SelwynCaseStudy
-:Purpose: This document describes the code and results for detection power analysis for the Selwyn District, New Zealand, for the Our land and Water project Monitoring Freshwater Improvements (https://www.monitoringfreshwater.co.nz/). This case study assess the power of Environment Canterbury's existing monitoring network to detect changes in groundwater levels and nitrate concentrations in the Selwyn District following Plan Change 1.
+:Purpose: This document describes the code and results for detection power analysis for the Selwyn District, New Zealand, for the Our Land and Water project Monitoring Freshwater Improvements (https://www.monitoringfreshwater.co.nz/). This case study assess the power of Environment Canterbury's existing monitoring network to detect changes in groundwater levels and nitrate concentrations in the Selwyn District following Plan Change 1.
 :Versions:
     - 2023-09-01: begin development
     - 2023-12-13: first draft
