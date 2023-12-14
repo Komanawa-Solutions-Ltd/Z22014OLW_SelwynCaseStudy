@@ -5,8 +5,11 @@
 
 \subsection[Data]{Receptors, Data processing, and analysis} \label{sec:data}
 
-\gls{ecan} provided us with \gls{no3n} concentration data for approximately 100 sites which included groundwater monitoring wells, spring fed streams and the Selwyn Waikirikiri River at Coes Ford. The Selwyn Waikirikiri River has both hill fed and spring fed components, but in the lower catchment it is a gaining stream and the low flows are dominated by spring fed flow. We worked collaboratively with \gls{ecan} to select a subset of sites for analysis. The raw data and all outputs are available in the \gls{proj_repo} and a summary table of the data is available in  % todo add an appendix
-Groundwater age data (\gls{mrt} and age distribution parameters) were provided by both \gls{ecan} and \gls{olw}.
+\gls{ecan} provided us with \gls{no3n} concentration data for approximately 100 sites which included groundwater monitoring wells, spring fed streams and the Selwyn Waikirikiri River at Coes Ford. The Selwyn Waikirikiri River has both hill fed and spring fed components, but in the lower catchment it is a gaining stream and the low flows are dominated by spring fed flow. We worked collaboratively with \gls{ecan} to select a subset of sites for analysis (\autoref{fig:sitelocs}). The raw data and all outputs are available in the \gls{proj_repo} and a summary table of the data is available in \autoref{appx:data} Groundwater age data (\gls{mrt} and age distribution parameters) were provided by both \gls{ecan} and \gls{olw}.
+
+\begin{landscape}
+    \kslfig{0.95\textwidth}{figures/selwyn_sites.png}{Final Site Locations}{sitelocs}
+\end{landscape}
 
 The data was processed as follows:
 \begin{enumerate}
@@ -69,4 +72,6 @@ For the statistical test we used:
     \item A \textbf{Mann-Kendall test} for sites without a historical increasing trend
     \item A \textbf{Multipart Mann-Kendall test} for sites with a historical increasing trend. We used a Multipart Mann-Kendall test here as a historically increasing trend can continue after the implementation of \gls{pc1}, due to historical increases in \gls{no3n} source concentrations which have not reached steady state at the receptor. A traditional Mann-Kendall test would require the absolute knowledge of the time of the maximum \gls{no3n} receptor concentration. A Multipart Mann-Kendall test does not require this knowledge. For more information see % todo cite my mpmk repo
 \end{itemize}
+
+We set the critical level at 5\% (<0.05) for both tests. For the Mann-Kendall test this means that the trend was detected if p<0.05. For the multipart Mann-Kendall test this means that the trend was detected if there was any breakpoint where the older data was increasing (p<0.05) and the newer data was decreasing (p<0.05). Note that a minium of 5 datapoints were required for each part in the multipart Mann-Kendall test. Finally, some sites would not have a decreasing \gls{no3n} concentration because the implemented reduction were not sufficient to reduce steady state concentrations below the current level. In this case the aforementioned multipart Mann-Kendall test would never detect the trend. Therefore, we conducted a subsequent multipart Mann-Kendall test which identified a breakpoint where there was an earlier increasing trend (p<0.05) and subsequently no trend (p>0.5). These "Plateau" sites are further discussed in \autoref{sec:plateau_results}.
 

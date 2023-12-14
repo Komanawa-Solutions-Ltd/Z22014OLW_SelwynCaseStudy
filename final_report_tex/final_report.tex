@@ -64,6 +64,7 @@
 \usepackage{etoolbox}
 \usepackage{ksl_fig/kslfigure}
 \usepackage{natbib}
+\usepackage{pdflscape}
 
 %----------------------------------------------------------------------------------------
 % GLOSSARY SETUP
@@ -327,8 +328,7 @@
 %---------------------------------------------------------------------------------------
     \input{custom_sections/Introduction}
     \input{custom_sections/methodology}
-    \input{custom_sections/results}
-    \input{custom_sections/discussion}
+    \input{custom_sections/results_discussion}
     \input{custom_sections/conclustions}
 
 %---------------------------------------------------------------------------------------
@@ -340,5 +340,11 @@
     \addcontentsline{toc}{section}{References} % add to toc
     % todo \bibliographystyle{apalike}
     % todo \bibliography{main}
+
+
+%---------------------------------------------------------------------------------------
+% APPENDIX
+%---------------------------------------------------------------------------------------
+    \input{custom_sections/appendix}
 
 \end{document}
