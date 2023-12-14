@@ -6,18 +6,23 @@
 
 \subsection[Site results]{Results for Individual Sites} \label{sec:site_results}
 
-% todo individual site plots (example)
+% todo individual site plots
+\kslfig {0.95\textwidth}{../GeneratedData/power_calc_site_plots/m36_3588_red30}{An example of the individual site detection power plots}{ex_plot}
 
 \subsubsection[Plateau Sites]{Plateau Sites: Sites where \gls{no3n} concentrations will not decrease under the \textit{a priori} pathway} \label{sec:plateau_results}
 
-% todo Plateau sites (example)
-% todo map of plataue sites (gw only) at different reductions
+% todo Plateau sites
+\kslfig {.95\textwidth}{../GeneratedData/power_calc_plateau_sites/l35_0205_red10}{An example of a Plateau Site}{ex_plateau}
+
+\begin{landscape}
+    \kslfig {0.95\textwidth}{../GeneratedData/geospatial_plots/plateau_locs}{The \gls{no3n} reduction at which a given site will not show a negaitve slope but instead will reach a lower steady state concentration (wells only)}{plateau_locs}
+\end{landscape}
 
 \subsection[Mean Residence Time Impacts]{Mean Residence Time, steady state concentration, and detection power} \label{sec:mrt_results}
 
 % todo discuss the impact of assumed MRT on surface water sites --> link to BASE
 
-\kslfig {0.95\textwidth}{figures/mrt_matters.png}{The impact of assumed \gls{mrt} on the steady state \gls{no3n} concentrations and the potential to detect \gls{pc1} reductions}{sw_mrt}
+\kslfig {0.95\textwidth}{../figures/mrt_matters.png}{The impact of assumed \gls{mrt} on the steady state \gls{no3n} concentrations and the potential to detect \gls{pc1} reductions}{sw_mrt}
 
 % todo counter factual stuff  detection too low ... high level break away box??
 
@@ -26,14 +31,16 @@
 
 \begin{landscape}
 
-    \kslfig {0.95\textwidth}{figures/well_detection_overview_red20}{The proportion of the groundwater network whick is likely to detect the full \gls{pc1} reductions (20\%)}{network20}
+    \kslfig {0.95\textwidth}{../GeneratedData/overview_plots/well_detection_overview_red20}{The proportion of the groundwater network whick is likely to detect the full \gls{pc1} reductions (20\%)}{network20}
 
-    \kslfig {0.95\textwidth}{figures/well_detection_overview_freq4}{The propotaion of the groundwater network which is likely to detect reduction at the current quarterly sampling frequency}{network4per}
+    \kslfig {0.95\textwidth}{../GeneratedData/overview_plots/well_detection_overview_freq4}{The propotaion of the groundwater network which is likely to detect reduction at the current quarterly sampling frequency}{network4per}
 
-    % todo map of year that detection power over 80% (20%) % todo make these plots, site by side map of noise free detection
+    % todo map of year that detection power over 80% (20%/quarterly) % todo make these plots, site by side map of noise free detection
 \end{landscape}
 
-% todo Identify the sites that are most important for detection power
-% todo counter factual detection power to see if people are on /off track
+\kslfig {0.95\textwidth}{../GeneratedData/geospatial_plots/detect_power_locs_red20_freq4}{Sampling duration until the probability of detecting a reduction is $\geq80\%$ }{timetodetect}
+
+%% todo Identify the sites that are most important for detection power
+%% todo counter factual detection power to see if people are on /off track
 
 

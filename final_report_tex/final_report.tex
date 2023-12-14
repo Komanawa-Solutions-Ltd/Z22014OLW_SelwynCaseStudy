@@ -65,6 +65,7 @@
 \usepackage{ksl_fig/kslfigure}
 \usepackage{natbib}
 \usepackage{pdflscape}
+\usepackage{truncate}
 
 %----------------------------------------------------------------------------------------
 % GLOSSARY SETUP
@@ -274,7 +275,7 @@
     % footer
     \renewcommand{\footrulewidth}{0.4pt}
     \fancyfoot[L]{\textbf{\thepage}~\textbar~KSL}
-    \fancyfoot[R]{\reporttitle}
+    \fancyfoot[R]{\truncate[...]{0.75\linewidth}{\reporttitle}}
     \pagenumbering{roman} % set page numbering to roman numerals for intro pages
 
     % About page
@@ -285,7 +286,7 @@
     \newpage
 
 %---------------------------------------------------------------------------------------
-%%	Table of contents SECTIONS %todo comment out if you don't want these
+%%	Table of contents SECTIONS
 %---------------------------------------------------------------------------------------
 
     % Table of contents
@@ -338,8 +339,8 @@
     \newpage
     \phantomsection % add to toc (make the link go to the right location)
     \addcontentsline{toc}{section}{References} % add to toc
-    % todo \bibliographystyle{apalike}
-    % todo \bibliography{main}
+    \bibliographystyle{apalike}
+    \bibliography{main}
 
 
 %---------------------------------------------------------------------------------------

@@ -73,6 +73,7 @@ The key outputs are:
 - Overview plots of the detection power for the full groundwater network where a reduction is possible (excluding plateau sites).  These plots are located in the `overview_plots <GeneratedData/overview_plots>`_ folder.
 - detection power plots for each site, reduction; and, for surface water sites, assumed MRT.  These plots are located in the `power_calc_site_plots <GeneratedData/power_calc_site_plots>`_ folder and the `power_calc_plateau_sites <GeneratedData/power_calc_plateau_sites>`_ folder for normal and plateau sites, respectively.
 - Comparisons of the detection power of surface water sites assuming different MRTs.  These plots are located in the `power_mrt_comp <GeneratedData/power_mrt_comp>`_ folder.
+- Maps of the detection power for the full groundwater network. These plots are located in the `geospatial_plots <GeneratedData/geospatial_plots>`_ folder.
 
 How to read the results plots
 ===============================
@@ -203,6 +204,7 @@ Github Repo index
     - `all_n_metadata.hdf <GeneratedData/all_n_metadata.hdf>`_: metadata for all sites
     - `no_trend_detection_power.hdf <GeneratedData/no_trend_detection_power.hdf>`_: generated detection powers for sites without an identifiable trend in the historical data (includes the effect of noise and lag)
     - `overview_plots <GeneratedData/overview_plots>`_: plots depicting the overall ability of the network to detect changes
+    - `geospatial_plots <GeneratedData/geospatial_plots>`_: plots depicting the geospatial distribution of the detection power
     - `plateau_detection_power_red10.hdf <GeneratedData/plateau_detection_power_red10.hdf>`_: generated detection powers for sites with a 10 percent reduction and an identifiable trend in the historical data which means that the concentration will only increase (includes the effects of lag and noise).
     - `plateau_detection_power_red20.hdf <GeneratedData/plateau_detection_power_red20.hdf>`_: generated detection powers for sites with a 20 percent reduction and an identifiable trend in the historical data which means that the concentration will only increase (includes the effects of lag and noise).
     - `plateau_detection_power_red30.hdf <GeneratedData/plateau_detection_power_red30.hdf>`_: generated detection powers for sites with a 30 percent reduction and an identifiable trend in the historical data which means that the concentration will only increase (includes the effects of lag and noise).
