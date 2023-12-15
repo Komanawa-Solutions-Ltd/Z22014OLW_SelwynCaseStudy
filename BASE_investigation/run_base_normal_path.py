@@ -17,6 +17,7 @@ from generators.normal_path_change import NormalPath
 from site_selection.get_n_data import get_n_metadata, plot_single_site, get_all_n_data
 import geopandas as gpd
 from project_base import unbacked_dir, project_dir
+from kendall_stats import MannKendall
 
 base_dir = unbacked_dir.joinpath('BASE')
 base_dir.mkdir(exist_ok=True)
@@ -119,12 +120,22 @@ def plot_base(site, outdir):
     mrt = data['age_mean']
     f_p1 = data['f_p1']
     depth = data['depth']
+    mk = data['mk_trend']
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
     dbs, model_name = get_dreamz(site)
-    fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.2, sharey=False,
-                                        title_additon=f'\n{depth=} m {mrt=} yr, {f_p1=}', percentiles=(5, 25),
-                                        pdf_alpha=0.25, plot_annual_vlines=True, plot_inflection_points=False)
+    fig, (ax_source, ax_recept) = dbs.plot_best_params_pred(
+        model_name=model_name, nplot=0.2, sharey=False,
+        title_additon=f'\n{depth=}m {mrt=}yr, {f_p1=}\nmk_trend={MannKendall.map_trend(mk)}',
+        percentiles=(5, 25),
+        pdf_alpha=0.25, plot_annual_vlines=True,
+        plot_inflection_points=False,
+        project_forward=30,
+
+    )
+    for lim in [2.4, 5.65, 11.3]:
+        ax_recept.axhline(lim, ls='--', color='k', alpha=0.5)
+        ax_source.axhline(lim, ls='--', color='k', alpha=0.5)
     fig.tight_layout()
     fig.savefig(outdir.joinpath(f'{model_name}_pred.png'))
 
