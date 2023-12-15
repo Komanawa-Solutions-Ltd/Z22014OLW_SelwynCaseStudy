@@ -6,13 +6,22 @@
 
 \subsection[Site results]{Results for Individual Sites} \label{sec:site_results}
 
-% todo individual site plots
+We have produced results and figures for each site.  It is beyond the scope of this report to discuss the detection power of each site; however all figures are available in the \gls{proj_repo}. An example of the individual site detection power plots is shown in \autoref{fig:ex_plot}. The figure details the detection power of site M36/3588 assuming a 30\% reduction in nitrate concentrations.  There are two subplots; for both the x-axis is the sampling duration/date. For the top plot the y-axis is \gls{no3n} concentration (mg/l).  The raw sample data and whether those data were included in the analysis (blue included, red/black not included), the predicted source concentration (yellow), the predicted receptor concentration with (gold) and without the implemented reduction (fuchsia). In the lower subplot the y-axis depicts the likelihood that a change in nitrate concentrations will be detected.  The color of the line represents the sampling frequency (e.g. monthly, quarterly, etc.).  Note that the grey line is the detection power assuming no noise (e.g. lag only or an infinite sampling frequency).  The correct interpretation of this plot is that this well would only be able to theoretically detect a change at or after 2027 (grey line).  With quarterly sampling however the noise of the site is such that the detection power is only likely to exceed 80\% in 2037 (gold line).
+
 \kslfig {0.95\textwidth}{../GeneratedData/power_calc_site_plots/m36_3588_red30}{An example of the individual site detection power plots}{ex_plot}
 
 \subsubsection[Plateau Sites]{Plateau Sites: Sites where \gls{no3n} concentrations will not decrease under the \textit{a priori} pathway} \label{sec:plateau_results}
 
-% todo Plateau sites
+Some sites will not show a statistically robust decreasing trend under the \textit{a priori} pathway. We refer to these sites as plateau sites.  An example of a plateau site is shown in \autoref{fig:ex_plateau}. Well L35/0205 is a plateau site because the steep increasing trend in concentration in combination with the significant \gls{mrt} suggest that the source and receptor concentration are at a significant disequilibrium. Therefore, the rather minor reductions (10\%) in the \textit{a priori} pathway will simply lower the eventual steady state concentration (e.g., gold vs fuchsia lines), but will not reduce the concentration below the observed initial concentration (sen slope fit in 2017).
+
 \kslfig {.95\textwidth}{../GeneratedData/power_calc_plateau_sites/l35_0205_red10}{An example of a Plateau Site}{ex_plateau}
+
+These plateau sites can cause a significant challenge in detection of \gls{pc1} reductions. At best, we have an estimate of the steady state concentration. Therefore, it is difficult to understand whether any discrepancy between observed steady state concentration (once concentration levels off) and the predicted steady state concentration (e.g., the fuchsia line in \autoref{fig:ex_plateau}) is due to issues with the implementation of \gls{pc1} or inaccuracies in the estimate of steady state concentration. These sites will require more sophisticated statistical analysis to determine whether the \gls{pc1} reductions have been implemented.
+
+% todo discuss the geo spread of the plateau sites, add to appenix
+
+
+
 
 \begin{landscape}
     \kslfig {0.95\textwidth}{../GeneratedData/geospatial_plots/plateau_locs}{The \gls{no3n} reduction at which a given site will not show a negaitve slope but instead will reach a lower steady state concentration (wells only)}{plateau_locs}
@@ -35,7 +44,6 @@
 
     \kslfig {0.95\textwidth}{../GeneratedData/overview_plots/well_detection_overview_freq4}{The propotaion of the groundwater network which is likely to detect reduction at the current quarterly sampling frequency}{network4per}
 
-    % todo map of year that detection power over 80% (20%/quarterly) % todo make these plots, site by side map of noise free detection
 \end{landscape}
 
 \kslfig {0.95\textwidth}{../GeneratedData/geospatial_plots/detect_power_locs_red20_freq4}{Sampling duration until the probability of detecting a reduction is $\geq80\%$ }{timetodetect}
