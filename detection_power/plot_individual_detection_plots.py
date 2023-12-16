@@ -245,6 +245,7 @@ def plot_well_overview_red(outpath, reduction):
     fig.supylabel('Percent of groundwater network')
     metadata = get_n_metadata()
     detect_noisy = pd.concat([get_no_trend_detection_power(), get_trend_detection_power()])
+    detect_not_noisy = pd.concat([get_no_trend_detection_power_no_noise(), get_trend_detection_power_no_noise()])
 
     sites = metadata.loc[metadata.type != 'stream'].index
     sites = sites[np.in1d(sites, get_final_sites())]
@@ -259,6 +260,22 @@ def plot_well_overview_red(outpath, reduction):
                  f'Percent of sites which can show a reduction ({len(sites)}/{ngw_sites} sites)')
     for i, (power_ax, freq) in enumerate(zip(power_axs, samp_freqs)):
         power_ax.set_title(f'{freq} samp. per year')
+
+        # not noisy
+        plt_data = []
+        for d in samp_durs:
+            idx = (
+                    np.in1d(detect_not_noisy['site'], sites)
+                    & (detect_not_noisy['samp_years'] == d)
+                    & (detect_not_noisy['samp_per_year'] == abs(freq))
+                    & (detect_not_noisy['reduction'] == reduction)
+            )
+            assert idx.sum() == len(sites)
+            idx = idx & (detect_not_noisy['power'] >= 80)
+            plt_data.append(idx.sum() / len(sites) * 100)
+
+        power_ax.plot(use_samp_durs, plt_data, ls='--', label=f'Noise Free\nonly lag effects\n(upper limit)', c='k')
+
         for pl, c in zip(percent_limits, colors):
             plt_data = []
             for d in samp_durs:
