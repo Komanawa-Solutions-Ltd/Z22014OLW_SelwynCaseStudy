@@ -544,6 +544,7 @@ def get_final_sites():
 
 if __name__ == '__main__':
     meta = get_n_metadata(False)
+    final_data = meta.loc[get_final_sites()]
     n = get_all_n_data()
     for k in ['keep0',
               'lisa_keep', 'Lisa_Comment_bool', 'keep0|lisa', '~keep0&lisa']:

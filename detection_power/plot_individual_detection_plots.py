@@ -300,6 +300,8 @@ def plot_well_overview_freq(outpath, freq, reductions=reductions):
     for power_ax, reduction in zip(power_axs, reductions):
         metadata = get_n_metadata()
         detect_noisy = pd.concat([get_no_trend_detection_power(), get_trend_detection_power()])
+        percent_limits = [25, 50, 80, 90]
+        detect_not_noisy = pd.concat([get_no_trend_detection_power_no_noise(), get_trend_detection_power_no_noise()])
 
         sites = metadata.loc[metadata.type != 'stream'].index
         sites = sites[np.in1d(sites, get_final_sites())]
@@ -307,19 +309,35 @@ def plot_well_overview_freq(outpath, freq, reductions=reductions):
         sites = sites[~np.in1d(sites, get_all_plateau_sites(reduction=reduction))]
 
         use_samp_durs = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(samp_durs * 365.25, unit='day')
-        percent_limits = [25, 50, 80, 90]
         colors = ['firebrick', 'darkorange', 'darkcyan', 'indigo']
 
-        fig.suptitle(f'Groundwater Detection Power for {freq} samples per year')
+        fig.suptitle(f'Groundwater Detection Power for {abs(freq)} samples per year')
         power_ax.set_title(f'{int(reduction * 100)} % reduction\n'
                            f'Percent of sites which can show a reduction ({len(sites)}/{ngw_sites} sites)')
+
+        # not noisy
+        plt_data = []
+        for d in samp_durs:
+            idx = (
+                    np.in1d(detect_not_noisy['site'], sites)
+                    & (detect_not_noisy['samp_years'] == d)
+                    & (detect_not_noisy['samp_per_year'] == abs(freq))
+                    & (detect_not_noisy['reduction'] == reduction)
+            )
+            assert idx.sum() == len(sites)
+            idx = idx & (detect_not_noisy['power'] >= 80)
+            plt_data.append(idx.sum() / len(sites) * 100)
+
+        power_ax.plot(use_samp_durs, plt_data, ls='--', label=f'Noise Free\nonly lag effects\n(upper limit)', c='k')
+
+        # noisy data
         for pl, c in zip(percent_limits, colors):
             plt_data = []
             for d in samp_durs:
                 idx = (
                         np.in1d(detect_noisy['site'], sites)
                         & (detect_noisy['samp_years'] == d)
-                        & (detect_noisy['samp_per_year'] == freq)
+                        & (detect_noisy['samp_per_year'] == abs(freq))
                         & (detect_noisy['reduction'] == reduction)
                 )
                 assert idx.sum() == len(sites)
@@ -327,12 +345,13 @@ def plot_well_overview_freq(outpath, freq, reductions=reductions):
                 plt_data.append(idx.sum() / len(sites) * 100)
 
             power_ax.plot(use_samp_durs, plt_data, marker='o', label=f'Power ≥ {pl}% ', c=c)
-            for v in np.arange(0, 110, 10):
-                power_ax.axhline(v, color='k', ls=':', lw=0.5, alpha=0.3)
-            power_ax.set_ylim(-5, 105)
-            for d in samp_durs:
-                d = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(d * 365.25, unit='day')
-                power_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
+
+        for v in np.arange(0, 110, 10):
+            power_ax.axhline(v, color='k', ls=':', lw=0.5, alpha=0.3)
+        power_ax.set_ylim(-5, 105)
+        for d in samp_durs:
+            d = pd.to_datetime(f'{start_year}-01-01') + pd.to_timedelta(d * 365.25, unit='day')
+            power_ax.axvline(d, color='k', ls=':', lw=0.5, alpha=0.3)
         power_ax.axvline(pd.to_datetime(f'{start_year}-01-01'), ls=':', label='reductions start', color='k')
         power_ax.set_xlim(pd.to_datetime('2005-01-01'), pd.to_datetime('2065-01-01'))
     leg_ax.legend(*power_axs[0].get_legend_handles_labels(), loc='center left')
@@ -352,8 +371,8 @@ def plot_all_overivew(outdir):
 
 if __name__ == '__main__':
     rerun = False
+    plot_all_overivew(generated_data_dir.joinpath('overview_plots'))
     if rerun:
-        plot_all_overivew(generated_data_dir.joinpath('overview_plots'))
         plot_all(generated_data_dir.joinpath('power_calc_site_plots'))
         plot_all_plateau_sites(generated_data_dir.joinpath('power_calc_plateau_sites'))
         plot_stream_detection(generated_data_dir.joinpath('power_mrt_comp'))

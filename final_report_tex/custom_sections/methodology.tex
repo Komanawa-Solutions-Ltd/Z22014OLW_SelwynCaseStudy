@@ -1,15 +1,11 @@
 %! Author = matt_dumont
 %! Date = 14/12/23
-
+%------------------------------------------------------------------
 \section[Methods]{Study Methodology}   \label{sec:methods}
-
+%------------------------------------------------------------------
 \subsection[Data]{Receptors, Data processing, and analysis} \label{sec:data}
 
 \gls{ecan} provided us with \gls{no3n} concentration data for approximately 100 sites which included groundwater monitoring wells, spring fed streams and the Selwyn Waikirikiri River at Coes Ford. The Selwyn Waikirikiri River has both hill fed and spring fed components, but in the lower catchment it is a gaining stream and the low flows are dominated by spring fed flow. We worked collaboratively with \gls{ecan} to select a subset of sites for analysis (\autoref{fig:sitelocs}). The raw data and all outputs are available in the \gls{proj_repo} and a summary table of the data is available in \autoref{appx:data} Groundwater age data (\gls{mrt} and age distribution parameters) were provided by both \gls{ecan} and \gls{olw}.
-
-\begin{landscape}
-    \kslfig{0.95\textwidth}{../figures/selwyn_sites}{Final Site Locations}{sitelocs}
-\end{landscape}
 
 The data was processed as follows:
 \begin{enumerate}
@@ -24,7 +20,12 @@ The data was processed as follows:
 
 \kslfig {0.90\textwidth}{figures/m36_8187}{Site M36/8187: note the "true" outliers (black) and the trend outliers(red)}{ex_outlier_trend}
 
+\begin{landscape}
+    \kslfig{1.25\textheight}{../figures/selwyn_sites}{Final Site Locations}{sitelocs}
+\end{landscape}
 
+
+%------------------------------------------------------------------
 \subsection[Pathways]{\textit{A. priori} Pathways} \label{subsec:apriori}
 
 In consultations with \gls{ecan} we generated the following \textit{a. priori} pathways for the implementation of \gls{no3n} reductions:
@@ -38,6 +39,7 @@ In consultations with \gls{ecan} we generated the following \textit{a. priori} p
 
 While \gls{pc1} specifies the reductions, it does not apply to all land parcels. The source zones for many wells and spring fed streams are poorly constrained. Providing multiple pathways provides an efficient mechanisms to explore the potential impact of different source zones and mitigation effectiveness. A higher than expected reduction pathway was provided to explore the potential impact of a more effective than expected implementation of \gls{pc1}.
 
+%------------------------------------------------------------------
 \subsection[Detection Power Methods] {Detection Power Methods} \label{subsec:detection_power_methods}
 
 The method to calculate the detection power of a given site was implemented after % todo cite my paper
