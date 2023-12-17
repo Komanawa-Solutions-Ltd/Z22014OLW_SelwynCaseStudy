@@ -66,6 +66,7 @@
 \usepackage{natbib}
 \usepackage{pdflscape}
 \usepackage{truncate}
+\usepackage{dirtytalk}
 
 %----------------------------------------------------------------------------------------
 % GLOSSARY SETUP
@@ -145,9 +146,7 @@
 % Table formatting
 %----------------------------------------------------------------------------------------
 \NewTblrTheme{fancy_tab}{
-    \SetTblrStyle{caption-tag}{font=\bfseries},
-
-
+    \SetTblrStyle{caption-tag}{font=\bfseries}
 }
 \NewTblrEnviron{ksltable}
 \SetTblrOuter[ksltable]{}
@@ -167,7 +166,7 @@
     vlines,
     row{odd} = {kslvlblue}, % alternate row colors
     row{even} = {white}, % alternate row colors
-    row{1} = {font=\bfseries, ksldarkblue, fg=white}, % header row
+    row{1} = {font=\bfseries, ksldarkblue, fg=white} % header row
 }
 
 %----------------------------------------------------------------------------------------
@@ -312,7 +311,7 @@
 
     % List of abbreviations/definitions
     \addcontentsline{toc}{subsection}{Definitions and Abreviations} \label{sec:defs}
-    \printglossary[title=Definitions and Abreviations, nonumberlist]  % todo wrap long glossary terms
+    \printglossary[title=Definitions and Abreviations, nonumberlist]
 
     \newpage
 
@@ -324,6 +323,8 @@
     \fancyhead[R]{\rightmark}
     \setcounter{page}{1} % reset page counter
     \pagenumbering{arabic} % set page numbering to arabic numerals for main pages
+
+   \glsresetall % reset glossary counts at the start of the main text
 %---------------------------------------------------------------------------------------
     % custom_sections
 %---------------------------------------------------------------------------------------
@@ -349,7 +350,3 @@
     \input{custom_sections/appendix}
 
 \end{document}
-
-
-% todo capitalize all subsection names in the header! (or full caps)
-% todo can we make the capitalisation of sections consistent?

@@ -3,9 +3,9 @@
 %------------------------------------------------------------------
 \section[Methods]{Study Methodology}   \label{sec:methods}
 %------------------------------------------------------------------
-\subsection[Data]{Receptors, Data processing, and analysis} \label{sec:data}
+\subsection[Data Processing]{Receptors, Data processing, and analysis} \label{sec:data}
 
-\gls{ecan} provided us with \gls{no3n} concentration data for approximately 100 sites which included groundwater monitoring wells, spring fed streams and the Selwyn Waikirikiri River at Coes Ford. The Selwyn Waikirikiri River has both hill fed and spring fed components, but in the lower catchment it is a gaining stream and the low flows are dominated by spring fed flow. We worked collaboratively with \gls{ecan} to select a subset of sites for analysis (\autoref{fig:sitelocs}). The raw data and all outputs are available in the \gls{proj_repo} and a summary table of the data is available in \autoref{appx:data} Groundwater age data (\gls{mrt} and age distribution parameters) were provided by both \gls{ecan} and \gls{olw}.
+\gls{ecan} provided us with \gls{no3n} concentration data for approximately 100 sites which included groundwater monitoring wells, spring fed streams and the Selwyn Waikirikiri River at Coes Ford. The Selwyn Waikirikiri River has both hill fed and spring fed components, but in the lower catchment it is a gaining stream and the low flows are dominated by spring fed flow. We worked collaboratively with \gls{ecan} to select a subset of sites for analysis (\autoref{fig:sitelocs}). Our final set of sites includes 46 groundwater wells and 10 surface water features. The raw data and all outputs are available in the \gls{proj_repo} and a summary table of the data is available in \autoref{appx:data} Groundwater age data (\gls{mrt} and age distribution parameters) were provided by both \gls{ecan} and \gls{olw}.
 
 The data was processed as follows:
 \begin{enumerate}
@@ -42,8 +42,8 @@ While \gls{pc1} specifies the reductions, it does not apply to all land parcels.
 %------------------------------------------------------------------
 \subsection[Detection Power Methods] {Detection Power Methods} \label{subsec:detection_power_methods}
 
-The method to calculate the detection power of a given site was implemented after % todo cite my paper
-using our open source package. % todo cite my package
+The method to calculate the detection power of a given site was implemented after \citet{dumont_determining_nodate}
+using our open source package\citep{dumont_komanawagw_detect_power_2023}.
 Briefly the methodology is as follows for each site:
 \begin{enumerate}
     \item Ascertain whether the historical concentration data has a statistically robust trend (e.g. via a Mann-Kendall test, see \autoref{fig:ex_outlier_trend})
@@ -65,14 +65,14 @@ Briefly the methodology is as follows for each site:
     \end{enumerate}
 \end{enumerate}
 
-The source concentration was estimated by fitting a simple source to receptor model. The source concentration was set via a parameterised trend and minimum value and then the source concentration was transformed to the receptor concentration via the \gls{epfm}. \autoref{fig:source_ex} provides an example of the source concentration estimation. Site M36/0698 has a statistically robust increasing trend, approximate 0.12 mg/l \gls{no3n}. Given the \gls{mrt} of 22.75 years the best fit of the data (solid gold line) suggests that the peak source concentration is likely c. 7 mg/l \gls{no3n} (dashed gold line). More details on this process are available in % todo cite my paper  and gw age tools repos
+The source concentration was estimated by fitting a simple source to receptor model. The source concentration was set via a parameterised trend and minimum value and then the source concentration was transformed to the receptor concentration via the \gls{epfm}. \autoref{fig:source_ex} provides an example of the source concentration estimation. Site M36/0698 has a statistically robust increasing trend, approximately 0.12 mg/l/yr \gls{no3n}. Given the \gls{mrt} of 22.75 years the best fit of the data (solid gold line) suggests that the peak source concentration is likely c. 7 mg/l \gls{no3n} (dashed gold line). More details on this process are available in \citet{dumont_determining_nodate, dumont_komanawagw_age_tools_2023}
 
 \kslfig {.95\textwidth}{figures/m36_0698_red20_true_conc}{Site M36/0698 as an example of the source concentration prediction}{source_ex}
 
 For the statistical test we used:
 \begin{itemize}
     \item A \textbf{Mann-Kendall test} for sites without a historical increasing trend
-    \item A \textbf{Multipart Mann-Kendall test} for sites with a historical increasing trend. We used a Multipart Mann-Kendall test here as a historically increasing trend can continue after the implementation of \gls{pc1}, due to historical increases in \gls{no3n} source concentrations which have not reached steady state at the receptor. A traditional Mann-Kendall test would require the absolute knowledge of the time of the maximum \gls{no3n} receptor concentration. A Multipart Mann-Kendall test does not require this knowledge. For more information see % todo cite my mpmk repo
+    \item A \textbf{Multipart Mann-Kendall test} for sites with a historical increasing trend. We used a Multipart Mann-Kendall test here as a historically increasing trend can continue after the implementation of \gls{pc1}, due to historical increases in \gls{no3n} source concentrations which have not reached steady state at the receptor. A traditional Mann-Kendall test would require the absolute knowledge of the time of the maximum \gls{no3n} receptor concentration. A Multipart Mann-Kendall test does not require this knowledge. For more information see \citet{dumont_komanawakendall_stats_2023}
 \end{itemize}
 
 We set the critical level at 5\% (<0.05) for both tests. For the Mann-Kendall test this means that the trend was detected if p<0.05. For the multipart Mann-Kendall test this means that the trend was detected if there was any breakpoint where the older data was increasing (p<0.05) and the newer data was decreasing (p<0.05). Note that a minium of 5 datapoints were required for each part in the multipart Mann-Kendall test. Finally, some sites would not have a decreasing \gls{no3n} concentration because the implemented reduction were not sufficient to reduce steady state concentrations below the current level. In this case the aforementioned multipart Mann-Kendall test would never detect the trend. Therefore, we conducted a subsequent multipart Mann-Kendall test which identified a breakpoint where there was an earlier increasing trend (p<0.05) and subsequently no trend (p>0.5). These Plateau sites are further discussed in \autoref{sec:plateau_results}.

@@ -386,10 +386,66 @@ def plot_all_overivew(outdir):
         plot_well_overview_freq(outdir.joinpath(f'well_detection_overview_freq{freq}.png'), freq=freq)
 
 
+def make_data_summary_table():
+    meta = get_n_metadata(False)
+    final_data = meta.loc[get_final_sites()]
+
+    # make new cols
+    nsum_col = '\gls{no3n} (5th, 50th, 95th percentile)'
+    final_data[nsum_col] = [f'{e[0]:.1f}, {e[1]:.1f}, {e[2]:.1f}' for e in final_data[['n05', 'nmedian', 'n95']].values]
+    dt_col = 'Sampling period'
+    final_data[dt_col] = [f'{pd.to_datetime(e[0]).year}-{pd.to_datetime(e[1]).year}' for e in final_data[["datetime_min", "datetime_max"]].values]
+    from kendall_stats import MannKendall
+    mk_trend = 'Mann-Kendall trend (p)'
+    final_data[mk_trend] = [f'{MannKendall.map_trend(e[0])} ({e[1]:.2f})' for e in
+                            final_data[['mk_trend', 'mk_p']].values]
+
+    lag_keys = []
+    for site in final_data.index:
+        mdist = final_data.loc[site, 'age_dist']
+        if mdist == 0:
+            lag_key = 'MRT sampled'
+        elif pd.notna(final_data.loc[site, 'age_comment']):
+            lag_key = f'MRT inferred: {final_data.loc[site, "age_comment"]}'
+        else:
+            lag_key = f'MRT inferred: median within {mdist}m +- {final_data.loc[site, "age_depth"]}m depth'
+        lag_keys.append(lag_key)
+    final_data['MRT info'] = lag_keys
+    mrt_col = 'MRT (f_p1)'
+    final_data[mrt_col] = [f'{e[0]:.1f} ({e[1]:.2f})' for e in final_data[['age_mean', 'f_p1']].values]
+
+    # plateau limit
+    final_data['Plateau limit'] = 'None'
+    for red in reductions:
+        idx = np.in1d(final_data.index,get_all_plateau_sites(reduction=red))
+        final_data.loc[idx, 'Plateau limit'] = f'$\leq{int(red * 100)}\%$'
+
+    keep_cols = {
+        'type': 'Type',
+        'depth': 'Depth',
+        'noise': '\gls{no3n} noise',
+        'ncount': 'N samples',
+        dt_col: dt_col,
+        nsum_col: nsum_col,
+        mk_trend: mk_trend,
+        'samples_per_year_mean': 'Samples per year',
+        'nztmx': 'NZTMX',
+        'nztmy': 'NZTMY',
+        mrt_col: mrt_col,
+        'MRT info': 'MRT info',
+        'Plateau limit': 'Plateau limit',
+    }
+    final_data = final_data[list(keep_cols.keys())].rename(columns=keep_cols)
+    final_data.sort_index(inplace=True)
+    final_data.reset_index(inplace=True)
+    final_data.to_latex(unbacked_dir.joinpath('data_summary.tex'), index=False, float_format='%.2f')
+
+
 if __name__ == '__main__':
     rerun = False
-    plot_all_overivew(generated_data_dir.joinpath('overview_plots'))
+    make_data_summary_table()
     if rerun:
+        plot_all_overivew(generated_data_dir.joinpath('overview_plots'))
         plot_all(generated_data_dir.joinpath('power_calc_site_plots'))
         plot_all_plateau_sites(generated_data_dir.joinpath('power_calc_plateau_sites'))
         plot_stream_detection(generated_data_dir.joinpath('power_mrt_comp'))
