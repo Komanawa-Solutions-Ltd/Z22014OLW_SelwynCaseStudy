@@ -10,28 +10,54 @@
 \begin{wrapfigure}{r}{0.5\textwidth}
     \begin{breakawaybox}[
         label={box:wierdresults}]{Counterinuitive Results}
-        Some of the results here are counterintuitive; for instance, in \autoref{fig:sw_mrt} the detection power of reductions in the site are higher with a \gls{mrt} of 10 years than with a \gls{mrt} of 5 years. Additionally, for some receptors (not pictured) the detection power and increase and then subsequently decrease with increasing sampling duration.
+        Some of the results here are counterintuitive; for instance, in \autoref{fig:sw_mrt} the detection power is higher with a \gls{mrt} of 10 years than with a \gls{mrt} of 5 years. Additionally, for some receptors (not pictured) the detection power increases and then subsequently decrease with increasing sampling duration.
 
-        This odd behaviour is due to the statistical method used. Because we are fitting Mann-Kendall to the data to find a reduction a quick (low lag and/or a swift implementation period) can lead to full reductions before an adequate sampling duration has passed to confidently detect the reduction.  The ensuring long flat period, where the true receptor concentration is not changing, leads to a higher p-value in the statistical test and therefore lower detection power.  In these instances, the most appropriate approach is to use a counterfactual approach to determine the detection power of the reduction.  This is discussed in \autoref{sec:counterfactual}.
+        This odd behaviour is due to the statistical method used. Fundamentally we are fitting a Mann-Kendall to the data and specifying success as p<0.05. A rapid change (low lag and/or a swift implementation period) pared with infrequent sampling can lead to the receptor reaching steady state before the statistical test can confidently detect the reduction. The ensuring long flat period, where the true receptor concentration is not changing, leads to a higher p-value in the statistical test and therefore lower detection power. In these instances another statistical test (e.g., a counterfactual approach), maybe a more robust method to detect the change. This is discussed in \autoref{sec:counterfactual}.
     \end{breakawaybox}
 \end{wrapfigure}
 
-We have produced results and figures for each site. It is beyond the scope of this report to discuss the detection power of each site; however all figures are available in the \gls{proj_repo}. An example of the individual site detection power plots is shown in \autoref{fig:ex_plot}. The figure details the detection power of site M36/3588 assuming a 30\% reduction in nitrate concentrations. There are two subplots; for both the x-axis is the sampling duration/date. For the top plot the y-axis is \gls{no3n} concentration (mg/l). The raw sample data and whether those data were included in the analysis (blue included, red/black not included), the predicted source concentration (yellow), the predicted receptor concentration with (gold) and without the implemented reduction (fuchsia). In the lower subplot the y-axis depicts the likelihood that a change in nitrate concentrations will be detected. The color of the line represents the sampling frequency (e.g. monthly, quarterly, etc.). Note that the grey line is the detection power assuming no noise (e.g. lag only or an infinite sampling frequency). The correct interpretation of this plot is that this well would only be able to theoretically detect a change at or after 2027 (grey line). With quarterly sampling however the noise of the site is such that the detection power is only likely to exceed 80\% in 2037 (gold line).
+Although we have produced results and figures for each site, it is beyond the scope of this report to discuss the detection power of each site; however all figures are available in the \gls{proj_repo}.
+An example of the individual site detection power plots is shown in \autoref{fig:ex_plot}.
+The figure details the detection power of site M36/3588 assuming a 30\% reduction in nitrate concentrations.
+There are two subplots; for both the x-axis is the sampling duration/date.
+For the top plot the y-axis is \gls{no3n} concentration (mg/l).
+The raw sample data and whether those data were included in the analysis (blue included, red/black not included), the predicted source concentration (yellow), the predicted receptor concentration with (gold) and without the implemented reduction (fuchsia) are all plotted.
+In the lower subplot the y-axis depicts the likelihood that a change in nitrate concentrations will be detected.
+The color of the line represents the sampling frequency (e.g. monthly, quarterly, etc.).
+Note that the grey line is the detection power assuming that the receptor has no \gls{no3n} noise.
+Effectively, the grey line is when the change would be detected if only lag was considered.
+The correct interpretation of this plot is that the lag at this well only allows a theoretical change detection at or after 2027 (grey line).
+However; if we consider the obscuration of noise, then with quarterly sampling the detection power is only likely to exceed 80\% in 2037 (gold line).
+We use the cutoff of 80\% as it is typically used as an acceptable threshold for confidently drawing conclusions and/or making decisions from the monitoring results interpretation\citep{dumont_determining_nodate}.
 
 \kslfig {0.95\textwidth}{../GeneratedData/power_calc_site_plots/m36_3588_red30}{An example of the individual site detection power plots}{ex_plot}
 
 %--------------------------------------------------------------------------------------------------------------
 \subsubsection[Plateau Sites]{Plateau Sites: Sites Where \gls{no3n} Concentrations Will Not Decrease Under the \textit{a priori} Pathway} \label{sec:plateau_results}
 
-Some sites will not show a statistically robust decreasing trend under the \textit{a priori} pathway. We refer to these sites as plateau sites. An example of a plateau site is shown in \autoref{fig:ex_plateau}. Well L35/0205 is a plateau site because the steep increasing trend in concentration in combination with the significant \gls{mrt} suggest that the source and receptor concentration are at a significant disequilibrium. Therefore, the rather minor reductions (10\%) in the \textit{a priori} pathway will simply lower the eventual steady state concentration (e.g., gold vs fuchsia lines), but will not reduce the concentration below the observed initial concentration (sen slope fit in 2017).
+Some sites will not show a statistically robust decreasing trend under the \textit{a priori} pathway.
+We refer to these sites as plateau sites. An example of a plateau site is shown in \autoref{fig:ex_plateau}.
+Well L35/0205 is a plateau site because the steep increasing trend in concentration in combination with the significant \gls{mrt} suggest that the source and receptor concentration are at a significant disequilibrium.
+Therefore, the rather minor reductions (10\%) in the \textit{a priori} pathway will simply lower the eventual steady state concentration (e.g., gold vs fuchsia lines), but will not reduce the concentration below the observed initial concentration (sen slope fit in 2017).
 
 \kslfig {.95\textwidth}{../GeneratedData/power_calc_plateau_sites/l35_0205_red10}{An example of a Plateau Site}{ex_plateau}
 
-These plateau sites can cause a significant challenge in detection of \gls{pc1} reductions. Often we have a poorly constrained estimate of the steady state concentration. Therefore, it is difficult to understand whether any discrepancy between observed steady state concentration (once concentration levels off) and the predicted steady state concentration (e.g., the fuchsia line in \autoref{fig:ex_plateau}) is due to issues with the implementation of \gls{pc1} or inaccuracies in the estimate of steady state concentration. These sites will require more sophisticated statistical analysis to determine whether the \gls{pc1} reductions have been implemented.
+These plateau sites can cause a significant challenge in detection of nitrate leaching reductions.
+Our knowledge of equilibrium nitrate concentrations in the absence of nitrate loss reductions is poor.
+This makes it difficult to understand the cause of any difference between a future observed steady state concentration (once concentration levels off) and the predicted steady state concentration (e.g., the fuchsia line in \autoref{fig:ex_plateau}).
+The differences could be due to either ineffective nitrate loss reduction actions, and/or on the ground actions not actually being implemented and/or inaccuracies in the estimate of steady state concentration.
+These sites will require more sophisticated statistical analysis to determine whether the \gls{pc1} nitrate loss reductions have been implemented.
 
 \input{tables/plat_tab}
 
-\autoref{fig:plateau_locs} shows the location of these plateau sites and at and below what reduction level they will plateau. Note we did not include the surface water features here as there is so much uncertainty surrounding their \gls{mrt}.  \autoref{tab:plateau} shows the percent of the groundwater network that will not show a decrease in \gls{no3n} concentrations at a given reduction level in the source. For example, 57\% of the groundwater network will not show a decrease in \gls{no3n} concentrations if the source is reduced by 5\%. This is an important result as it suggests that the \gls{pc1} reductions may not yield steady state concentrations below 2017 concentrations for a significant portion of groundwater network.
+\autoref{fig:plateau_locs} shows the location of these plateau sites and at and the maximum nitrate loss reduction at which concentrations will plateau.
+Note we did not include the surface water features here as there is too much uncertainty surrounding their \gls{mrt}.
+For the red shaded sites nitrate concentrations would be expected to plateau if the average nitrate loss reduction in the monitoring well capture zone is less than or equal to 5\% but would show a concentration decline if the reduction is greater than 5\%.
+Nitrate concentration reductions of 30\% or less are unlikely to result in nitrate concentration reductions for the fuchsia shaded sites.
+If an average nitrate loss reduction of 10\% is assumed, nitrate concentrations in the fuchsia, gold and blue shaded sites would all plateau at some point in the future, with no measurable decrease occurring.
+\autoref{tab:plateau} shows the percent of the groundwater network that will not show a decrease in \gls{no3n} concentrations at a given reduction level in the source.
+For example, 57\% of the groundwater network will not show a decrease in \gls{no3n} concentrations if the source is reduced by 5\%.
+This is an important result as it suggests that the \gls{pc1} reductions may not yield steady state concentrations below 2017 concentrations for a significant portion of groundwater network.
 
 \begin{landscape}
     \kslfig {1.25\textwidth}{../GeneratedData/geospatial_plots/plateau_locs}{The \gls{no3n} reduction at which a given site will not show a negaitve slope but instead will reach a lower steady state concentration (wells only)}{plateau_locs}
@@ -40,23 +66,45 @@ These plateau sites can cause a significant challenge in detection of \gls{pc1} 
 %--------------------------------------------------------------------------------------------------------------
 \subsection[Mean Residence Time Impacts]{Mean Residence Time, Steady State Concentration, and Detection Power} \label{sec:mrt_results}
 
-Our use of a set of indicative \gls{mrt} values for surface water features allows us to easily demonstrate the importance of \gls{mrt} on both detection powers and steady state \gls{no3n} concentrations. \autoref{fig:sw_mrt} demonstrates the impact of assumed \gls{mrt} on the interpretation of the steady state concentration in Harts Creek.  Harts creek is a small spring-fed tributary of Te Waihora (Lake Ellesmere) on the southwestern side of the lake. There is a substantial historical record of increasing \gls{no3n} concentrations, but there is no evidence on the age of the water within the creek. Our simple source concentration modelling (see \autoref{subsec:detection_power_methods}) and the data prior to 2017 suggests that the peak steady state concentrations in the receptor (without reductions) could range between 7.6 to 12.0 mg/l \gls{no3n}.  This is a large range and the maximum and minimum values have significantly different levels of concern --- the maximum possible value is beyond the drinking water limit.  The uncertainty in the likely maximum peak concentration in this receptor could be significantly constrained with a relatively cost-effective \gls{mrt} sample.
+Our use of a set of indicative \gls{mrt} values for surface water features highlights the importance of \gls{mrt} for both detection power analysis and steady state \gls{no3n} concentrations.
+\autoref{fig:sw_mrt} demonstrates the impact of the assumed \gls{mrt} on the estimation of the steady state \gls{no3n} concentration in Harts Creek.
+Harts creek is a small spring-fed tributary of Te Waihora (Lake Ellesmere) on the southwestern side of the lake. There is a substantial historical record of increasing \gls{no3n} concentrations, but there is no data on the age of the water within the creek.
+Our simple source concentration modelling (see \autoref{subsec:detection_power_methods}) and the measured nitrate concentration data prior to 2017 suggest that the peak steady state concentrations in the receptor (without reductions) could range between 7.6 to 12.0 mg/l \gls{no3n}.
+This large range is significant from a water resource management perspective --- the maximum possible value is beyond the drinking water limit.
+Concentrations in spring fed streams above the drinking water limit would imply that water supply wells in the catchment are, on average, likely to exceed the limit.
+In addition, the nitrate loss reductions required to achieve the national bottom line nitrate concentration in the stream vary widely between these two estimates, which has important implications for farming in the stream catchment.
+
+The uncertainty in the likely maximum peak concentration in this receptor could be significantly constrained with one or more relatively cost-effective \gls{mrt} samples.
+It is also worth understanding that in surface water features \gls{mrt} may not be a static value, but may vary with stream flow with higher flows, where runoff is a higher percentage of the flow, having a younger \gls{mrt} than base flows where more of the stream flow is likely derived from groundwater.
 
 \kslfig {0.95\textwidth}{../figures/mrt_matters.png}{The impact of assumed \gls{mrt} on the steady state \gls{no3n} concentrations and the potential to detect \gls{pc1} reductions}{sw_mrt}
 
-Additionally, the \gls{mrt} has a significant implication on the ability to detect \gls{pc1} \gls{no3n} reductions. If the \gls{mrt} is relatively low (5-10 years) then it is feasible to detect \gls{pc1} reductions by 2032 with current (monthly) or slightly higher sampling frequency; however a higher \gls{mrt} of 20 years significantly reduces detectability. With a \gls{mrt} of 30 years, \gls{pc1} reductions are unlikely to result in a decrease in \gls{no3n} concentrations (see \autoref{sec:plateau_results}) relative to their 2017 concentrations. Note that the counterintuitive result that the detection power with \gls{mrt} of 5 years is lower than that of \gls{mrt} 10 years is discussed in \autoref{box:wierdresults}.
+The \gls{mrt} is also a significant factor for detecting \gls{pc1} \gls{no3n} reductions.
+If the \gls{mrt} is relatively low (5-10 years) then it would be feasible to detect \gls{pc1} reductions by 2032 with the current (monthly) or slightly higher sampling frequency.
+A higher \gls{mrt} of 20 years would significantly reduce detectability and with a \gls{mrt} of 30 years, the \gls{pc1} nitrate loss reductions are unlikely to result in a decrease in \gls{no3n} concentrations (see \autoref{sec:plateau_results}) relative to their 2017 concentrations.
+Note that the counterintuitive result that the detection power with \gls{mrt} of 5 years is lower than that of \gls{mrt} 10 years is discussed in \autoref{box:wierdresults}.
 
-Finally, we must comment that our method for detecting the maximum concentration is fairly simplistic and is likely to be biased.  Further, more complex, statistical analysis could provide a much better estimate of the likely maximum concentration. Such analysis is beyond the scope of this report; however, the results here do demonstrate the importance of \gls{mrt} on the interpretation of the steady state concentration and the detection power of \gls{pc1} reductions.
+Finally, we highlight that our method for detecting the maximum concentration is fairly simplistic and is likely to be inaccurate.
+The assumption that the source concentration has a single monotonic trend is unrealistic, but depending on the historical concentrations, may overestimate or underestimate the steady state concentration.
+Further, more complex, statistical analysis could provide a much better estimate of the likely maximum concentration.
+Such analysis is beyond the scope of this report; however, the results here do demonstrate the importance of \gls{mrt} on the interpretation of the steady state concentration and the detection power of the monitoring network with respect to the nitrate loss reductions required under \gls{pc1}.
 
 %--------------------------------------------------------------------------------------------------------------
 \subsection[Network Detection Power]{Network Level Detection Power} \label{sec:network_results}
 \kslfig {0.95\textwidth}{../GeneratedData/geospatial_plots/detect_power_locs_red20_freq4}{Sampling duration until the probability of detecting a reduction is $\geq80\%$ }{timetodetect}
 
-\autoref{fig:network20} shows the sampling duration required to detect \gls{pc1} reductions (assuming a full 20\% reduction) with 80\% probability using quarterly sampling. The black dashed line in \autoref{fig:network4per} shows the percentage of the network which can detect \gls{pc1} reductions assuming that the true receptor concentration is known. This analysis includes the including the effects of lag, but excludes the obscuration of the reductions by \gls{no3n} noise.
-\autoref{fig:timetodetect} provides a geospatial representation of \autoref{fig:network20} and the 20\% subplot of \autoref{fig:network4per}. In combination these figures shows that the vast majority of the groundwater network will not be able to detect \gls{pc1} reductions at quarterly sampling. Increasing the sampling frequency can significantly increase the detection power of the network, but there is a maximum detectability set by the lag component.
+\autoref{fig:network20} shows the sampling duration required to detect \gls{pc1} nitrate loss reductions (assuming a full 20\% reduction) with 80\% probability using quarterly sampling.
+The black dashed line in \autoref{fig:network4per} shows the percentage of the network which can detect \gls{pc1} reductions assuming that the true receptor concentration is known.
+This analysis includes the effects of lag, but excludes the obscuration of the reductions by \gls{no3n} variability / noise and therefore represents the upper limit of change detection potential for very low (zero) noise sites or at very high sampling frequencies.
+\autoref{fig:timetodetect} provides a geospatial representation of \autoref{fig:network20} and the 20\% subplot of \autoref{fig:network4per}.
+In combination these figures shows that the vast majority of the groundwater network will not be able to detect \gls{pc1} reductions with quarterly sampling.
+Increasing the sampling frequency can significantly increase the detection power of the network, but there the maximum detectability is constrained by the lag component.
 
-These results are consistent with the observation that very few wells in the catchment have a statistically significant reducing trend (only 3 of 46 sites in this study, and only 9 of 102 sites provided by \gls{ecan}). Given our results the lack of reducing \gls{no3n} concentrations cannot inform whether \gls{pc1} reductions are being successfully implemented. At current sampling rates we should not expect to see \gls{pc1} reductions in more than half of the network (which are expected to have reductions, see \autoref{sec:plateau_results}) until 2062. Increasing to weekly or monthly sampling would improve the detection power of the network, and we could expect detection in at least 50\% of the network by 2042 and 2037, respectively.
-
+These results are consistent with the observation that very few wells in the catchment have a statistically significant reducing trend (only 3 of 46 sites in this study, and only 9 of 102 sites for which we were originally provided data by \gls{ecan}).
+Given our results, the lack of reducing \gls{no3n} concentrations cannot inform whether \gls{pc1} reductions are being successfully implemented.
+If we assume a full 20\% \gls{no3n} reduction in the all the source zones, the 46 groundwater sites in this study only 30 sites will have any \gls{no3n} reduction(see \autoref{sec:plateau_results}).
+At current quarterly sampling rates, it will take until 2062 before 15 sites (50\% of those that will have reductions) will have a statistically significant reduction in \gls{no3n} concentrations.
+Increasing to weekly or monthly sampling would improve the detection power of the network, and we could expect detection in those 15 sites by 2042 and 2037, respectively.
 
 \begin{landscape}
 
@@ -64,32 +112,46 @@ These results are consistent with the observation that very few wells in the cat
 
     \kslfig {1.25\textwidth}{../GeneratedData/overview_plots/well_detection_overview_freq4}{The propotaion of the groundwater network which is likely to detect reduction at the current quarterly sampling frequency}{network4per}
 
-\kslfig {1.25\textwidth}{../GeneratedData/overview_plots/well_detection_overview_red10}{The proportion of the groundwater network whick is likely to detect the full \gls{pc1} reductions (10\%)}{network10}
+    \kslfig {1.25\textwidth}{../GeneratedData/overview_plots/well_detection_overview_red10}{The proportion of the groundwater network whick is likely to detect the full \gls{pc1} reductions (10\%)}{network10}
 
 \end{landscape}
 
-\autoref{fig:network4per} shows the effect of different reductions on detection power with a quarterly sampling frequency. Note that these figures exclude the plateau sites (see \autoref{sec:plateau_results} and \autoref{tab:plateau}). If we assume that dairy farming only makes up 50\% of the source area for these wells (i.e., 10\% reductions), then 1) nearly 50\% of the network will never have \gls{no3n} concentrations below 2017 levels, and with quarterly sampling we should not expect to see \gls{pc1} reductions in more than 10\% of the remaining network. Increasing sampling frequencies to monthly or weekly would significantly improve the probability of detection these changes(\autoref{fig:network10}).  Note that increasing sampling frequency will not impact the plateau sites.
+\autoref{fig:network4per} shows the effect of different reductions on detection power with a quarterly sampling frequency.
+Note that these figures exclude the plateau sites (see \autoref{sec:plateau_results} and \autoref{tab:plateau}).
+If we assume that dairy farming only makes up 50\% of the source area for these wells (i.e., 10\% reductions on average in the source zone), then:
+\begin{enumerate}
+    \item Nearly 50\% of the network will never have a decreasing \gls{no3n} concentration.
+    \item With quarterly sampling we would not expect to see evidence of \gls{pc1} reductions in more than 10\% of the remaining network and not until after 2050.
+    \item Increasing sampling frequencies to monthly or weekly would significantly improve the probability of detection these changes(\autoref{fig:network10}). Note that increasing sampling frequency will not impact the plateau sites.
+\end{enumerate}
 
 %--------------------------------------------------------------------------------------------------------------
 \subsection[Counterfactual Approach]{The Benefits of a Counterfactual Approach} \label{sec:counterfactual}
 
-The analysis presented here is designed to answer the question: \say{How long will it take to detect \textit{any} reduction in \gls{no3n} at our existing receptor?} This is a useful question, but it is not the only question that can be asked. For example, we could ask:
-\say{How long will it take to detect a full implementation of \gls{pc1} 20\% reduction in \gls{no3n} at our existing receptor?}
-or
-\say{How long before we can tell that we are on track for at least a 10\% reduction in a well's source zone has been implemented?}.
-These questions require a different statistical approach --- a counterfactual approach. Essentially, the question answered by a counterfactual approach is: \say{How long until we are confident that pathway 1 and pathway 2 are significantly different?} Unfortunately a counterfactual approach has not yet been implemented in the groundwater detection power calculator \citep{dumont_komanawagw_detect_power_2023}; however, the development of this will likely be completed in 2024. It is worth noting that any uncertainty in the `true` source concentration, which is typically uncertain, is more likely to yield additional uncertainty in the counterfactual detection power as the absolute difference between two pathways is important while only the relative change is necessary for the `reduction` detection power.
+The analysis presented here is designed to answer the question: \say{How long will it take to detect \textit{any} reduction in \gls{no3n} at our existing receptor?} This is a useful question, but it is not the only question that can be asked.
+For example, we could ask: \say{How long will will we need to monitor to determine whether a 20\% concentration reduction has occurred?} or \say{How long before we can determine wheter or not we are on track for at least a 10\% \gls{no3n} reduction?}.
+These questions require a different statistical approach --- a counterfactual approach.
+Essentially, the question answered by a counterfactual approach is: \say{How long until we are confident that pathway 1 and pathway 2 are significantly different?}.
+A counterfactual approach has not yet been implemented in the groundwater detection power calculator\citep{dumont_komanawagw_detect_power_2023}, but it is being developed and will be available by mid 2024.
+It is worth noting that any uncertainty in the `true` source concentration, which is typically uncertain, is more likely to yield additional uncertainty in the counterfactual detection power.
+This is because the absolute difference between two pathways is important under a counterfactual approach whereas only the relative change is necessary for the `reduction` detection power approach presented in this report.
 
-Finally, both the \say{reduction} and \say{counterfactual} detection power are different from asking \say{Has the receptor seen a full 20\% reduction in concentration?}. The issue here is that to confirm a full 20\% reduction requires the receptor to be at or at least very close to steady state. Depending on the distribution of the water age it can take significantly longer than the \gls{mrt} for a receptor to reach steady state.
+Finally, it should be noted that neither the approach presented here nor the counterfactual approach can reliably determine whether a specified concentration reduction has occurred: a steady state receptor nitrate concentration at the time the reduction is implemented would be required for this. Depending on the distribution of the water age, it can take significantly longer than the \gls{mrt} for a receptor to reach steady state.
 
 %--------------------------------------------------------------------------------------------------------------
 \subsection[Possible Network Improvements]{How to Improve the Existing Network}
 
-Our results suggest that the current monitoring network is likely to require a significant amount of time in order to detect the \gls{pc1} \gls{no3n} reductions. A typical suggestion to improve the detection of changes is to identify bespoke monitoring at sites which have a far lower \gls{mrt} than the rest of the network. Identifying reducing \gls{no3n} concentrations in new, younger wells would provide confidence that \gls{no3n} concentrations are going in the right direction (down), but unfortunately, such results could not prove that the changes were due to \gls{pc1}. \gls{pc1} reductions have, theoretically, already been implemented. Some young groundwater could already be approaching steady state, so depending on the \gls{mrt} no change in concentration could be consistent with successfully implemented \gls{pc1} reductions.
+Our results suggest that the current monitoring network is unlikely to detect whether the \gls{pc1} \gls{no3n} reductions have been implemented successfully in the short to medium term under the current monitoring frequency.
+It may be possible to reduce the monitoring duration required to detect change via bespoke monitoring at new sites with a low \gls{mrt} and low signal/noise ratio.
+Although reducing \gls{no3n} concentrations in such would provide confidence that \gls{no3n} concentrations are going in the right direction (down), the results could not prove that the changes were due to \gls{pc1} because these reductions have, theoretically, already been implemented.
+Some young groundwater could already be approaching steady state with respect to the \gls{pc1} nitrate loss reductions.
+This means that, depending on the \gls{mrt}, a zero change in concentration could be consistent with successfully implemented \gls{pc1} reductions.
 
+ %todo start review here
 Instead, we suggest that the best approach to improve the unambiguous detection of \gls{pc1} reductions is to:
 \begin{enumerate}
-    \item Increase the certainty of the \gls{mrt} estimates in groundwater detection network; only c. 30\% of groundwater sites had a \gls{mrt} assessment (e.g., via tritium).  The remaining 60\% were estimated from nearby wells, which introduces a significant amount of uncertainty. Further age assessments would significantly improve the certainty of the network's detection power and allow increased frequency sampling to occur at sites which are likely to detect the change.
+    \item Increase the certainty of the \gls{mrt} estimates in groundwater detection network; only c. 30\% of groundwater sites had a \gls{mrt} assessment (e.g., via tritium). The remaining 60\% were estimated from nearby wells, which introduces a significant amount of uncertainty. Further age assessments would significantly improve the certainty of the network's detection power and allow increased frequency sampling to occur at sites which are likely to detect the change.
     \item Increase sampling at sites that this analysis (or additional analysis with additional \gls{mrt} assessments) show a suitably high probability of detecting \gls{pc1} reductions.
-    \item similar to 1. the surface water network has a significant amount of information about the catchment and acts as an integrator which alleviates some of the challenges of the spatial representativeness of the groundwater network\citep{olw_guidance}; however the utility of this information is sabotaged by the lack of \gls{mrt} assessments. Understanding the age distribution and the relationship between the age distribution and river/stream stage/flow would unlock the power of these sites.
-    \item Finally, more sophisticated statistical analysis could be used to extract more information from the existing data without waiting decades for additional information.
+    \item similar to 1. the surface water network has a significant amount of information about the catchment and acts as an integrator of water quality from a much larger sample of land within the Te Waihora catchment. This alleviates some of the challenges of the spatial representativeness of the groundwater network\citep{olw_guidance}; however the utility of this information is thwarted by the lack of \gls{mrt} assessments. Understanding the age distribution and the relationship between the age distribution and river/stream stage/flow would unlock the power of these sites and support design of an optimized and integrated water quality monitoring network.
+    \item Finally, more sophisticated statistical analysis could be used to extract more information from the existing data and significantly reduce the time required to determine whether the \gls{pc1} plan rules and associated land management actions are successfully reducing nitrate concentrations.
 \end{enumerate}
