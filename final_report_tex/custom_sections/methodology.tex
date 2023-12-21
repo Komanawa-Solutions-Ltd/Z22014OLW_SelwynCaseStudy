@@ -74,14 +74,21 @@ Briefly the methodology is as follows for each site:
     \end{enumerate}
 \end{enumerate}
 
-% todo expand this further!?
-The source concentration was estimated by fitting a simple source to receptor model. The source concentration was set via a parameterised trend and minimum value. The source concentration was then transformed to the receptor concentration via the \gls{epfm}. \autoref{fig:source_ex} provides an example of the source concentration estimation. Site M36/0698 has a statistically robust increasing trend, approximately 0.12 mg/l/yr \gls{no3n}. Given the \gls{mrt} of 22.75 years the best fit of the data (solid gold line) suggests that the peak source concentration is likely to be c. 7 mg/l \gls{no3n} (dashed gold line). More details on this process are available in \citet{dumont_determining_nodate, dumont_komanawagw_age_tools_2023}
+The source concentration was estimated by fitting a simple source to receptor model.
+The source concentration was set via a parameterised trend and minimum value.
+The assumption is that the source concentration has been monotonically increasing with time from a minimum value of 0.01 mg/l \gls{no3n}.
+The source concentration was then transformed to the receptor concentration via the \gls{epfm}.
+We then conducted curve fitting to find the best fit of the source concentration to the receptor concentration.
+\autoref{fig:source_ex} provides an example of the source concentration estimation.
+Site M36/0698 has a statistically robust increasing trend, approximately 0.12 mg/l/yr \gls{no3n}.
+Given the \gls{mrt} of 22.75 years the best fit of the data (solid gold line) suggests that the peak source concentration is likely to be c. 7 mg/l \gls{no3n} (dashed gold line).
+More details on this process are available in \citet{dumont_determining_nodate, dumont_komanawagw_age_tools_2023}
 
 \kslfig {.95\textwidth}{figures/m36_0698_red20_true_conc}{Site M36/0698 as an example of the source concentration prediction}{source_ex}
 
 For the statistical test we used:
 \begin{itemize}
-    \item A \textbf{Mann-Kendall test} for sites without an  increasing trend
+    \item A \textbf{Mann-Kendall test} for sites without an increasing trend
     \item A \textbf{Multipart Mann-Kendall test} for sites with an increasing trend. We used a Multipart Mann-Kendall test here as an increasing trend can continue after the implementation of \gls{pc1}, due to historical increases in \gls{no3n} source concentrations which have not reached steady state at the receptor. A traditional Mann-Kendall test would require the absolute knowledge of the time of the maximum \gls{no3n} receptor concentration. A Multipart Mann-Kendall test does not require this knowledge. For more information see \citet{dumont_komanawakendall_stats_2023}
 \end{itemize}
 
