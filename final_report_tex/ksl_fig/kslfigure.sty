@@ -8,6 +8,8 @@
 \RequirePackage{wrapfig}
 \RequirePackage{tabularray}
 \RequirePackage{float}
+\RequirePackage{ifthen} % provides \ifthenelse test
+\RequirePackage{xifthen} % provides \isempty test
 
 %%Requeiried packages and preliminary definitions, needed by the options
 % keynote requires passing of \projectname \client \reportenddate
@@ -15,7 +17,7 @@
 \newlength{\kslfigwidth}
 
 % KSL FIGURE
-\newcommand{\kslfig}[5][h]
+\newcommand{\kslfig}[6][h]
 % #1 = placement, default = h
 %     Parameter	Position
 %     h	Place the float here, i.e., approximately at the same point it occurs in the source text (however, not exactly at the spot)
@@ -28,6 +30,7 @@
 % #3 = image path
 % #4 = caption
 % #5 = label label = (fig:label)
+% #6 = supplmental description
 {
     \setlength{\kslfigwidth}{#2}
     \begin{figure}[#1]
@@ -37,6 +40,14 @@
             \hrule
             \caption{#4}
             \label{fig:#5}
+
+            % supplemental description
+            \ifthenelse{\isempty{#6}}
+            {#6}               % if no suplemental option given
+            {\noindent\hfil\rule{0.75\textwidth}{.4pt}\hfil
+
+            #6
+            }
             %KSL branding and client/project info here
             \scriptsize
             \hrule
@@ -54,7 +65,7 @@
 
 
 % KSL WRAP FIGURE
-\newcommand{\kslwrapfig}[5][L]
+\newcommand{\kslwrapfig}[6][L]
 % #1 = placement {r,R,l,L,i,I,o,O} default = L
 %     r	R	right side of the text
 %     l	L	left side of the text
@@ -65,6 +76,7 @@
 % #3 = image path
 % #4 = caption
 % #5 = label label = (fig:{label})
+% #6 = supplmental description
 {
     \setlength{\kslfigwidth}{#2}
     \begin{wrapfigure}{#1}{1.1\kslfigwidth} %this figure will be at the left
@@ -74,6 +86,13 @@
             \hrule
             \caption{#4}
             \label{fig:#5}
+            %supplemental description
+            \ifthenelse{\isempty{#6}}
+            {#6}               % if no suplemental option given
+            {\noindent\hfil\rule{0.75\textwidth}{.4pt}\hfil
+
+            #6
+            }
             %KSL branding and client/project info here
             \scriptsize
             \hrule

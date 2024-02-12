@@ -11,12 +11,19 @@ We worked collaboratively with \gls{ecan} to select a subset of sites for analys
 Our final set of sites includes 46 groundwater wells and 10 surface water features.
 The raw data and all outputs are available in the \gls{proj_repo} and a summary table of the data is available in \autoref{appx:data}.
 Groundwater age data (\gls{mrt} and age distribution parameters) were also provided by \gls{ecan}.
+Note that the age data is not available for all sites.
+
+\begin{breakawaybox}[label={box:mrt}]{How mean residence time is identified}
+    Groundwater ages are typically estimated from measured environmental tracers such as \gls{cfc}, \gls{h3} and \gls{sf6}.
+    We have historical atmospheric concentrations of these tracers and, because these tracer are conservative (concentrations do not change over time) or breakdown in a constant rate can use them to estimate the age of the groundwater.  This is typically done using simple 1d mixing models, such as the \gls{epfm}. These mixing models provide a distribution of ages for the water in the sample and the mean of this distribution is the \gls{mrt}. Because these mixing models simplify the systems there is some inherent, often unquantified, uncertainty in the age estimates. Nevertheless, these ages provide useful constraints on the distribution of ages in the aquifer and are useful for understanding the potential pathways of contaminants.
+
+\end{breakawaybox}
 
 The data was processed as follows:
 \begin{enumerate}
     \item \textbf{Outlier Identification}: we identified two types of outliers (see \autoref{fig:ex_outlier_trend}):
     \begin{enumerate}
-        \item  True outliers: values which based on a statistical and visual analysis were clearly outside the measured values for the site. These values were removed from the dataset.
+        \item  True outliers: values which based on a statistical and visual analysis were clearly outside the measured values for the site. These values were removed from the dataset. It is worth noting that these \say{true outliers} are not necessarily erroneous data, but they are not representative of the site's typical \gls{no3n} concentration. For instance, recharge events can cause a spike in \gls{no3n} concentration, which is not representative of the long-term trend.
         \item Trend outliers: data which precede the most recent / current trend and could erroneously affect the fit of the current historical trend. These values were not included in the historical trend analysis or \gls{no3n} noise estimation.
     \end{enumerate}
     \item \textbf{Estimate the age distribution, wells}: where sites did not have age sampling and modelled groundwater age distributions we estimate the parameters from nearby sites. The method was somewhat manual and was often site specific. Details on how we estimated the age distribution for each site are available in the \gls{proj_repo}.
@@ -31,7 +38,7 @@ The data was processed as follows:
 
 
 %------------------------------------------------------------------
-\subsection[Pathways]{\textit{A. priori} Pathways} \label{subsec:apriori}
+\subsection[Pathways]{Assumed Pathways} \label{subsec:apriori}
 
 In consultation with \gls{ecan} we generated the following \textit{a. priori} pathways for the implementation of \gls{no3n} reductions:
 \begin{itemize}
@@ -42,10 +49,10 @@ In consultation with \gls{ecan} we generated the following \textit{a. priori} pa
     \item \textbf{30\% reduction}: a 30\% reduction in \gls{no3n} source concentrations implemented linearly between 2017 and 2022.
 \end{itemize}
 
-While \gls{pc1} specifies the required nitrate reductions, it does not apply to all land uses.
-The source zones for wells and spring fed streams will comprise a mixture of land use types and hence nitrate loss reduction rates, but these source zones are either unknown or poorly constrained.
-the mandated nitrate reduction rate within the catchment area of each monitoring site could range between zero (if the catchment/source zone encompasses only land uses for which nitrate loss reductions are not required) and 20\% (if the catchment contains only high intensity land use for which a 20\% reduction is required).
-We therefore modelled a range of nitrate loss reductions (aka \textit{a. priori} pathways).
+While \gls{pc1} specifies the required nitrate load reductions, it does not apply to all land uses.
+The source zones for wells and spring fed streams will comprise a mixture of land use types and hence nitrate load loss reduction rates, but these source zones are either unknown or poorly constrained.
+the mandated nitrate reduction rate within the catchment area of each monitoring site could range between zero (if the catchment/source zone encompasses only land uses for which nitrate load loss reductions are not required) and 20\% (if the catchment contains only high intensity land use for which a 20\% reduction is required).
+We therefore modelled a range of nitrate loss reductions (aka assumed pathways).
 A higher-than-expected reduction pathway (30\%) was also included to explore the potential impact of better than expected nitrate loss reductions on change detection monitoring.
 
 %------------------------------------------------------------------
@@ -54,6 +61,14 @@ A higher-than-expected reduction pathway (30\%) was also included to explore the
 The method to calculate the detection power of a given site was implemented after \citet{dumont_determining_nodate}
 using our open source package\citep{dumont_komanawagw_detect_power_2023}.
 Briefly the methodology is as follows for each site:
+
+\begin{wrapfig}{r}{0.4\textwidth}
+    \begin{breakawaybox}[label={box:dp}]{What is Detection Power}
+        Detection power is the percent probability of detecting a statistically robust trend in the receptor concentration time series. Noisy data reduces the detection power while more frequent sampling increases the detection power. 
+        \includegraphics{figures/dp_ex}
+    \end{breakawaybox}
+\end{wrapfig}
+
 \begin{enumerate}
     \item Ascertain whether the historical concentration data has a statistically robust trend (e.g. via a Mann-Kendall test, see \autoref{fig:ex_outlier_trend})
     \item Estimate the noise in the receptor concentration time series
@@ -62,8 +77,8 @@ Briefly the methodology is as follows for each site:
         \item If the historical concentration data does not have a statistically robust trend, then the noise can be estimated as the standard deviation of the receptor concentration time series.
         \item If the historical concentration data has a statistically robust decreasing trend, we assumed that the receptor was at steady state and considered the site in the same fashion as a site with no statistically robust trend. This assumption was used because it is very difficult to estimate the historical pathway of a decreasing trend as the maximum concentration is unconstrained. While this will likely underestimate the detection power, it is a conservative approach and only affects a small number of sites (only 3 of 46 sites in this study).
     \end{enumerate}
-    \item Estimate the source zone concentration from the historical trend (if any) and the groundwater age distribution.
-    \item Predict the true receptor concentration time series (e.g., the concentration at the receptor if there was no noise) based on the aforementioned source concentration, \textit{a priori} pathway and the groundwater age distribution.
+    \item Estimate the average source zone concentration (i.e., at the base of the root zone) from the historical trend (if any) and the groundwater age distribution.
+    \item Predict the true receptor concentration time series (e.g., the concentration at the receptor if there was no noise) based on the aforementioned source concentration, assumed pathway and the groundwater age distribution.
     \item Resample the true receptor concentration time series to the desired sampling frequency and duration (e.g., quarterly sampling for 10 years).
     \item Calculate the statistical probability of detecting the change
     \begin{enumerate}
@@ -97,5 +112,5 @@ For the Mann-Kendall test this means that the trend was detected if p<0.05. For 
 Note that a minium of 5 datapoints were required for each part in the multipart Mann-Kendall test.
 Finally, some sites will not have a decreasing \gls{no3n} concentration because the implemented nitrate loss reduction is insufficient to reduce steady state concentrations below the current level.
 In this case the aforementioned multipart Mann-Kendall test would never detect a trend.
-Therefore, we conducted a subsequent multipart Mann-Kendall test which identified a breakpoint where there was an earlier increasing trend (p<0.05) and subsequently no trend (p>0.5). These Plateau sites are further discussed in \autoref{sec:plateau_results}.
+Therefore, we conducted a subsequent multipart Mann-Kendall test which identified a breakpoint where there was an earlier increasing trend (p<0.05) and subsequently no trend (p>0.5). These plateau sites are further discussed in \autoref{sec:plateau_results}.
 
