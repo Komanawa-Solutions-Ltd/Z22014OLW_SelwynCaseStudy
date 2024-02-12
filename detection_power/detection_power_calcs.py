@@ -17,6 +17,8 @@ from generate_true_concentration.gen_true_slope_init_conc import get_site_true_r
 samp_durs = np.arange(5, 55, 5)
 samp_freqs = (1, 4, 12, 52)
 
+wordy_samp_freqs = {1: 'Annual', 4: 'Quarterly', 12: 'Monthly', 52: 'Weekly'}
+
 
 def make_trend_meta_data():
     use_sites = get_final_sites()

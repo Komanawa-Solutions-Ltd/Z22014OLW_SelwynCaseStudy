@@ -12,7 +12,7 @@ from project_base import generated_data_dir, proj_root
 from site_selection.get_n_data import get_n_metadata, get_final_sites
 from detection_power.detection_power_calcs import get_all_plateau_sites, get_trend_detection_power, \
     get_no_trend_detection_power, reductions, samp_freqs, samp_durs, get_trend_detection_power_no_noise, \
-    get_no_trend_detection_power_no_noise
+    get_no_trend_detection_power_no_noise, wordy_samp_freqs
 
 base_map_path = proj_root.joinpath('original_data/topo250/nz-topo250-maps.jpg')
 outdir = generated_data_dir.joinpath('geospatial_plots')
@@ -30,12 +30,12 @@ def plot_plateau_locs():
 
     colors = ['r', 'b', 'gold', 'fuchsia']
     idx = final_sites['type'] != 'stream'
-    ax.scatter(final_sites.loc[idx, 'nztmx'], final_sites.loc[idx, 'nztmy'], c='k', label='Never', s=msize)
+    ax.scatter(final_sites.loc[idx, 'nztmx'], final_sites.loc[idx, 'nztmy'], c='k', label='>0% reduction', s=msize)
     for c, red in zip(colors, reductions):
         temp = final_sites.loc[get_all_plateau_sites(red)]
         temp = temp.loc[temp['type'] != 'stream']
-        ax.scatter(temp['nztmx'], temp['nztmy'], c=c, label=f'$\leq${int(red * 100)}% reduction', s=msize)
-    ax.legend(title='Plateau at:', loc='upper right')
+        ax.scatter(temp['nztmx'], temp['nztmy'], c=c, label=f'> {int(red * 100)}% reduction', s=msize)
+    ax.legend(title='Decreasing concentrations\npossible in receptor at:', loc='upper right')
     fig.tight_layout()
     fig.savefig(outdir.joinpath('plateau_locs.png'))
     plt.show()
@@ -91,8 +91,8 @@ def plot_detect_power_locs():
             ax2.scatter(temp['nztmx'], temp['nztmy'], color=c, label=f'{dur} years', s=msize)
 
         cax.legend(handles, labels, loc='center left', title='years to detection\n($\geq$80% power)')
-        ax1.set_title(f'Including noise, red.={int(red * 100)}%, freq.={freq}/yr')
-        ax2.set_title(f'Lag only, red.={int(red * 100)}%')
+        ax1.set_title(f'Including noise, red.={int(red * 100)}%, {wordy_samp_freqs[freq]} sampling')
+        ax2.set_title(f'Lag only (noise free), red.={int(red * 100)}%')
         for ax in [ax1, ax2]:
             ax.set_ylim(5.137e6, 5.195e6)
             ax.set_xlim(1.505e6, 1.575e6)
