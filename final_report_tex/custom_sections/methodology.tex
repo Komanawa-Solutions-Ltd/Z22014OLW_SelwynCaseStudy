@@ -15,7 +15,11 @@ Note that the age data is not available for all sites.
 
 \begin{breakawaybox}[label={box:mrt}]{How mean residence time is identified}
     Groundwater ages are typically estimated from measured environmental tracers such as \gls{cfc}, \gls{h3} and \gls{sf6}.
-    We have historical atmospheric concentrations of these tracers and, because these tracer are conservative (concentrations do not change over time) or breakdown in a constant rate can use them to estimate the age of the groundwater. This is typically done using simple 1d mixing models, such as the \gls{epfm}. These mixing models provide a distribution of ages for the water in the sample and the mean of this distribution is the \gls{mrt}. Because these mixing models simplify the systems there is some inherent, often unquantified, uncertainty in the age estimates. Nevertheless, these ages provide useful constraints on the distribution of ages in the aquifer and are useful for understanding the potential pathways of contaminants.
+    We have historical atmospheric concentrations of these tracers.
+    Because these tracer are conservative (concentrations do not change over time) or breakdown at a known rate we can use them to estimate the age of the groundwater. This is typically done using simple 1D mixing models, such as the \gls{epfm}.
+    These mixing models provide a distribution of ages for the water in the sample and the mean of this distribution is the mean residence time.
+    Because these mixing models simplify the systems there is some inherent, often unquantified, uncertainty in the age estimates.
+    Nevertheless, these ages provide useful constraints on the distribution of ages in the aquifer and are useful for understanding the potential pathways of contaminants.
 
 \end{breakawaybox}
 
@@ -27,7 +31,7 @@ The data was processed as follows:
         \item Trend outliers: data which precede the most recent / current trend and could erroneously affect the fit of the current historical trend. These values were not included in the historical trend analysis or \gls{no3n} noise estimation.
     \end{enumerate}
     \item \textbf{Estimate the age distribution, wells}: where sites did not have age sampling and modelled groundwater age distributions we estimate the parameters from nearby sites. The method was somewhat manual and was often site specific. Details on how we estimated the age distribution for each site are available in the \gls{proj_repo}.
-    \item \textbf{Estimate the age distribution, streams}: There was no age estimates for the spring fed streams and the Selwyn-Waikirikiri; therefore we assessed the detection power assuming a range \gls{mrt} values: 5, 10, 20, and 30 years. The other age model parameters were assumed to be the median of all sites within (7.5 or 10 km) and <=10m depth. Further details are available in the \gls{proj_repo}
+    \item \textbf{Estimate the age distribution, streams}: There was no age estimates for the spring fed streams and the Selwyn-Waikirikiri; therefore we assessed the detection power assuming a range \gls{mrt} values centered on: 5, 10, 20, and 30 years. The other age model parameters were assumed to be the median of all sites within (7.5 or 10 km) and <=10m depth. Further details are available in the \gls{proj_repo}
 \end{enumerate}
 
 \kslfig {0.90\textwidth}{figures/m36_8187}{Site M36/8187: note the "true" outliers (black) and the trend outliers(red)}{ex_outlier_trend}{}
@@ -40,7 +44,7 @@ The data was processed as follows:
 %------------------------------------------------------------------
 \subsection[Pathways]{Assumed Pathways} \label{subsec:apriori}
 
-In consultation with \gls{ecan} we generated the following \textit{a. priori} pathways for the implementation of \gls{no3n} reductions:
+In consultation with \gls{ecan} we generated the following assumed pathways for the implementation of \gls{no3n} reductions:
 \begin{itemize}
     \item \textbf{No change}: no change in \gls{no3n} source concentrations.
     \item \textbf{5\% reduction}: a 5\% reduction in \gls{no3n} source concentrations implemented linearly between 2017 and 2022.
@@ -51,15 +55,14 @@ In consultation with \gls{ecan} we generated the following \textit{a. priori} pa
 
 While \gls{pc1} specifies the required nitrate load reductions, it does not apply to all land uses.
 The source zones for wells and spring fed streams will comprise a mixture of land use types and hence nitrate load loss reduction rates, but these source zones are either unknown or poorly constrained.
-the mandated nitrate reduction rate within the catchment area of each monitoring site could range between zero (if the catchment/source zone encompasses only land uses for which nitrate load loss reductions are not required) and 20\% (if the catchment contains only high intensity land use for which a 20\% reduction is required).
+The mandated nitrate reduction rate within the catchment area of each monitoring site could range between zero (if the catchment/source zone encompasses only land uses for which nitrate load loss reductions are not required) and 30\% (if the catchment contains only high intensity land use for which a 30\% reduction is required).
 We therefore modelled a range of nitrate loss reductions (aka assumed pathways).
-A higher-than-expected reduction pathway (30\%) was also included to explore the potential impact of better than expected nitrate loss reductions on change detection monitoring.
 
 %------------------------------------------------------------------
 \subsection[Detection Power Methods] {Detection Power Methods} \label{subsec:detection_power_methods}
 
 The method to calculate the detection power of a given site was implemented after \citet{dumont_determining_nodate}
-using our open source package\citep{dumont_komanawagw_detect_power_2023}.
+using our open source package \citep{dumont_komanawagw_detect_power_2023}.
 Briefly the methodology is as follows for each site:
 
 \begin{wrapfigure}{R}{0.70\textwidth}
@@ -95,7 +98,7 @@ Briefly the methodology is as follows for each site:
 The source concentration was estimated by fitting a simple source to receptor model.
 The source concentration was set via a parameterised trend and minimum value.
 The assumption is that the source concentration has been monotonically increasing with time from a minimum value of 0.01 mg/l \gls{no3n}.
-The source concentration was then transformed to the receptor concentration via the \gls{epfm}.
+The source concentration was then transformed to the receptor concentration via the \gls{epfm} see \autoref{box:mrttoconc}.
 We then conducted curve fitting to find the best fit of the source concentration to the receptor concentration.
 \autoref{fig:source_ex} provides an example of the source concentration estimation.
 Site M36/0698 has a statistically robust increasing trend, approximately 0.12 mg/l/yr \gls{no3n}.
