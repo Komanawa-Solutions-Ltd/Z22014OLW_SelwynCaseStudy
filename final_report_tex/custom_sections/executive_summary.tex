@@ -1,25 +1,31 @@
 %! Author = matt_dumont
 %! Date = 4/12/23
-
 \phantomsection % add to toc (make the link go to the right location)
-\addcontentsline{toc}{section}{Executive Summary} % add to toc
-\section*{Executive Summary} \label{exsum} % the asterisk prevents a section number from being assigned
+\addcontentsline{toc}{section}{Key Findings} % add to toc
+\section*{Key Findings} \label{keyf} % the asterisk prevents a section number from being assigned
 
 \begin{breakawaybox}[label={box:keyfind}, title=Key Findings]{}
     Our key findings are:
     \begin{itemize}
         \item The current monitoring programme is not well suited to detecting reductions in nitrate at the scale required by \gls{pc1}. Note that this is only one aspect of the monitoring programme and our findings do not comment on the overall quality of the programme.
         \item It will likely be 30 or more years before \gls{pc1} reductions can be detected by the current monitoring regime.
-        \item The ultimate \gls{no3n} concentration (once all the \gls{no3n} has made it to the stream) and the ability of the surface water features to detect changes in \gls{no3n} is highly sensitive to the assumed \gls{mrt}.
+        \item If we incorrectly ignore \gls{no3n} noise and only consider \gls{mrt} then the \gls{pc1} reductions should be detectable much sooner (< 15 years for many sites).
+        \item The ultimate \gls{no3n} concentration (once all the \gls{no3n} has made it to the sampling point) and the ability of the surface water features to detect changes in \gls{no3n} is highly sensitive to the assumed \gls{mrt}.
         \item Obtaining water age data for all key monitoring sites, particularly in surface water courses, is a key recommendation.
-        \item A significant investment in monitoring infrastructure and data collection is required to meet these goals.
-        \item At the end of the day, there is a trade-off between economically feasible \gls{no3n} mitigations and the cost of the monitoring programme required to detect the effectiveness of these mitigations. Very large mitigations are easy to detect, but often economically infeasible to  implement. Smaller mitigations are more economically feasible, but require a more expensive monitoring programme to detect.
-        \item The monitoring programme required to assess the effectiveness of a plan change and the resourcing required to implement the required monitoring programme should be an integrated component of the plan change itself. Unquestioningly relying on the existing monitoring programme to detect plan change effectiveness is likely to be a high risk strategy.
+        \item There is a trade-off between the scale of \gls{no3n} mitigations and the cost of the monitoring programme required to detect the effectiveness of these mitigations. Very large mitigations are easy to detect, but may not be realistic for other reasons. Smaller mitigations are typically more tenable, but require a more expensive monitoring programme to detect.
+        \item This report demonstrates that bespoke monitoring programmes may often be required to assess the effectiveness of a plan change. We suggest that analysis of the monitoring programme needed and its cost should be an integrated component of the plan change itself.
+        \item Finally, detecting \gls{pc1} or similar changes requires a significant investment in monitoring infrastructure and data collection.
     \end{itemize}
 
 \end{breakawaybox}
 
+\newpage
+
 \glsresetall  % reset the glossary acronyms
+\phantomsection % add to toc (make the link go to the right location)
+\addcontentsline{toc}{section}{Executive Summary} % add to toc
+\section*{Executive Summary} \label{exsum} % the asterisk prevents a section number from being assigned
+
 
 \gls{pc1} of the Canterbury Land and Water Regional Plan included requirements for farmers in the Selwyn Waihora catchment to reduce nitrate discharges to groundwater to support water quality improvements.
 \gls{pc1} became operational in 2016 with a requirement for \gls{no3n} reductions to be fully implemented by 2022.
@@ -29,7 +35,7 @@ This study evaluates the change detection power analysis of 56 sites (46 groundw
 \begin{wrapfigure}{R}{0.50\textwidth}
     \begin{breakawaybox}[title=What is Detection Power]{}
 
-        Essentially, detection power describes the chance that you can see what's really going on in the data.
+        Essentially, detection power describes the chance that you can see whether concentrations are changing over time.
         More specifically, detection power is the percent probability of detecting a statistically robust trend in the receptor concentration time series.
         Noisy data reduces the detection power while more frequent sampling increases the detection power.
         \\
@@ -38,17 +44,18 @@ This study evaluates the change detection power analysis of 56 sites (46 groundw
 \end{wrapfigure}
 
 Our analysis suggests that the current monitoring programme is not well suited to detecting reductions in nitrate at the scale required by \gls{pc1}.
-\gls{pc1} requires nitrate load reductions between 2-30\% depending on land use \autoref{box:no3_red}.
+\gls{pc1} requires nitrate load reductions between 2-30\% depending on land use (see \autoref{box:no3_red}).
 Here we assume at a 20\% reduction in nitrate loads is equivalent to a 20\% reduction in leachate nitrate concentrations; however changes in coincident land surface recharge (e.g., the move to efficient irrigation), could yield lower than expected reductions in nitrate leachate concentrations.
-Our analysis suggests that approximately 60\% of groundwater monitoring sites will show decreasing \gls{no3n} concentrations (negative slope) if nitrate concentrations in source soil drainage reduce by 10-20\%.
-The remaining 40\% of sites are likely to plateau at a higher concentration than was recorded in 2016.
+Our analysis suggests that only approximately 60\% of groundwater monitoring sites will ever show decreasing \gls{no3n} concentrations (negative slope) if nitrate concentrations in source soil drainage reduce by 10-20\%.
+The remaining 40\% of sites are likely to plateau and larger reductions would be required to observe decreasing concentrations.
 Note that these steady state concentrations will be lower than if \gls{pc1} had not been implemented.
-The impact of \gls{pc1} on these \say{plateau} sites will not be detectable via slope monitoring (looking for a decreasing concentration trend), but future work may be able to detect these changes using a counter-factual approach.
+The impact of \gls{pc1} on these \say{plateau} sites will not be detectable via slope monitoring (looking for a decreasing concentration trend), but future work may be able to detect these changes using a counterfactual approach.
 There is significant uncertainty in these estimates due to the lack of \gls{mrt} data in c. 60\% of the groundwater monitoring locations we investigated.
 However, if our \gls{mrt} estimates are correct then the nitrate reductions required under \gls{pc1} should be detectable in c. 30\% of the monitoring wells (50\% of those which can have a decreasing trend) by c. 2060.
 Increasing sampling frequencies to monthly or weekly would allow detection of the reductions in c. 30\% of the monitoring wells by 2040 or 2035, respectively.
 
-Surface water features generally receive water from a much larger catchment than individual wells and are therefore more likely to provide a landscape scale representation of policy and land management action effectiveness. However, no water age data are available for surface water courses in the Selwyn Waihora catchment making robust predictions of change detection power impossible.
+Surface water features generally receive water from a much larger catchment than individual wells and are therefore more likely to provide a landscape scale representation of policy and land management action effectiveness.
+However, no water age data are available for surface water courses in the Selwyn Waihora catchment, making robust predictions of change detection power impossible.
 We therefore derived detection power estimates by assuming a range of \gls{mrt} values.
 Our results show that the detection power of the surface water features is highly sensitive to the assumed \gls{mrt} value.
 
@@ -75,6 +82,12 @@ should be applied to improve the surface water and groundwater monitoring progra
     \item Finalising network and monitoring design.
     \item Reviewing data after 1, 3 and 5 years of sampling to determine whether detection power and timeframe requirements have changed in light of new information.
 \end{itemize}
-We note that these recommendations will require a significant investment in monitoring infrastructure and data collection.  A companion study found that a 100-300\% increase in investment is likely required nationally to meet these goals \citep{dumont_determining_nodate}. This highlights the discrepancy between the goals of national monitoring programmes and the resources available to regional councils to meet these goals. This is further exacerbated by the need for economically feasible interventions. The larger the change in \gls{no3n} the easier it is to detect that change. This is a national challenge and cannot be ascribed as a failure of Environment Canterbury or any other regional council in isolation.
 
-A key caveat of this report is that we only focused on one aspect of the monitoring programme: detecting changes in \gls{no3n} concentrations. The network serves and was primarily designed for multiple other purposes some of which are counter to high detection powers (e.g., characterising the state of the deep aquifer system). We also have not assessed the spatial representativeness of the monitoring network in this analysis (for either change detection or more broadly) as it was beyond the scope of this project.
+We note that these recommendations will require a significant investment in monitoring infrastructure and data collection. A companion study found that a 100-300\% increase in investment is likely required nationally to meet these goals \citep{dumont_determining_nodate}.
+This highlights the discrepancy between the goals of national monitoring programmes and the resources available to regional councils to meet these goals.
+This can be further exacerbated by the desire for smaller or more gradual interventions; the larger the change in \gls{no3n} the easier it is to detect that change.
+This is a national challenge for regional councils and communities across New Zealand.
+
+A key caveat of this report is that we only focused on one aspect of the monitoring programme: detecting changes in \gls{no3n} concentrations.
+The network serves and was primarily designed for multiple other purposes some of which are counter to high detection powers (e.g., characterising the state of the deep aquifer system).
+We also have not assessed the spatial representativeness of the monitoring network in this analysis (for either change detection or more broadly) as it was beyond the scope of this project.
