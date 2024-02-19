@@ -542,7 +542,36 @@ def get_final_sites():
     return meta.loc[meta['final_keep']].index
 
 
+def plot_outlier_example():
+    fig = plt.Figure(figsize=(8, 8))
+    gs = fig.add_gridspec(2, 2, width_ratios=(1,0.3))
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax2 = fig.add_subplot(gs[1, 0])
+    ax3 = fig.add_subplot(gs[:, 1])
+    metadata = get_n_metadata()
+    ndata = get_all_n_data()
+    site = 'l36_0871'
+    plot_single_site(site, ndata, metadata, ax=ax1, alpha=1, reduction=None, plot_auto_exlcude=False, rolling=None)
+    site = 'l36_0477'
+    fig2, ax, handles, labels = plot_single_site(site, ndata, metadata, ax=ax2, alpha=1, reduction=None, plot_auto_exlcude=False, rolling=None)
+    # turnoff legend
+    ax2.get_legend().remove()
+    ax1.get_legend().remove()
+    ax1.set_title('Well l36_0871')
+    ax2.set_title('Well l36_0477')
+    ax3.legend(handles, labels, loc='center', fontsize=8)
+    ax3.axis('off')
+    fig.supylabel('Nitrate Concentration (mg/L)')
+    fig.tight_layout()
+    fig.savefig(proj_root.joinpath('final_report_tex/figures/ex_outliers.png'))
+    plt.show()
+
+
+
+
 if __name__ == '__main__':
+    plot_outlier_example()
+    raise NotImplementedError
     meta = get_n_metadata(False)
     final_data = meta.loc[get_final_sites()]
     n = get_all_n_data()
