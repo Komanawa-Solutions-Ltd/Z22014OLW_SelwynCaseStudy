@@ -9,11 +9,11 @@ import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
-from solvers.DreamzsBPEFM import DreamzsBpefmSolver
+from modeltools.solvers import BaseSolver
 from pydream.parameters import SampledParam
 from scipy.stats import uniform
-from run_managers.run_multiprocess import run_multiprocess
-from generators.normal_path_change import NormalPath
+from modeltools.run_managers.run_multiprocess import run_multiprocess
+from modeltools.generators.normal_path_change import NormalPathGenerator
 from site_selection.get_n_data import get_n_metadata, plot_single_site, get_all_n_data
 import geopandas as gpd
 from project_base import unbacked_dir, project_dir
@@ -67,7 +67,7 @@ def plot_sites():
         fig.savefig(plt_dir.joinpath(f'{site}.png'))
 
 
-def get_dreamz(site, rerun=False):
+def get_base(site, rerun=False):
     ndata = get_all_n_data()
     data = get_n_metadata()
     data = data.loc[site]
@@ -96,16 +96,16 @@ def get_dreamz(site, rerun=False):
     else:
         start_bounds = (0.1, 5)
 
-    dbs = DreamzsBpefmSolver(save_dir=run_dir, n_inflections=break_freq,
-                             ts_data=ndata,
-                             inflection_times=None, cdf_inflection_start=0.05,
-                             mrt=mrt, mrt_p1=mrt_p1, mrt_p2=None, frac_p1=1, f_p1=f_p1,
-                             f_p2=0.5,  # dummy
-                             precision=precision)
+    dbs = BaseSolver(save_dir=run_dir, n_inflections=break_freq,
+                     ts_data=ndata,
+                     inflection_times=None, cdf_inflection_start=0.05,
+                     mrt=mrt, mrt_p1=mrt_p1, mrt_p2=None, frac_p1=1, f_p1=f_p1,
+                     f_p2=0.5,  # dummy
+                     precision=precision)
 
-    params = [SampledParam(NormalPath, start_bounds, 0.1, 20, 1, dbs.n_inflections)]
+    params = [SampledParam(NormalPathGenerator, start_bounds, 0.1, 20, 1, dbs.n_inflections)]
 
-    sampled_params, log_ps = dbs.run_dreamzs(
+    sampled_params, log_ps = dbs.run_base(
         model_name=model_name,
         params=params,
         niterations=10000, nchains=nchains, starts=None, verbose=True,
@@ -123,7 +123,7 @@ def plot_base(site, outdir):
     mk = data['mk_trend']
     outdir = Path(outdir)
     outdir.mkdir(exist_ok=True)
-    dbs, model_name = get_dreamz(site)
+    dbs, model_name = get_base(site)
     fig, (ax_source, ax_recept) = dbs.plot_best_params_pred(
         model_name=model_name, nplot=0.2, sharey=False,
         title_additon=f'\n{depth=}m {mrt=}yr, {f_p1=}\nmk_trend={MannKendall.map_trend(mk)}',
@@ -143,14 +143,14 @@ def plot_base(site, outdir):
 def run_all(rerun=False):
     for site in sites:
         print(f'running {site}')
-        dbs, model_name = get_dreamz(site, rerun=rerun)
+        dbs, model_name = get_base(site, rerun=rerun)
         fig, ax = dbs.plot_best_params_pred(model_name=model_name, nplot=0.05)
         plt.show()
 
 
-def _get_dreamz_mp(kwargs):
+def _get_base_mp(kwargs):
     try:
-        get_dreamz(**kwargs)
+        get_base(**kwargs)
     except Exception:
         t = traceback.format_exc()
         with logdir.joinpath(f'{kwargs["site"]}_{datetime.datetime.now().isoformat()}.log').open('w') as f:
@@ -161,12 +161,22 @@ def run_all_mp(rerun=False):
     runs = []
     for site in sites:
         runs.append(dict(site=site, rerun=rerun))
-    run_multiprocess(_get_dreamz_mp, runs, subprocess_cores=nchains)
+    run_multiprocess(_get_base_mp, runs, subprocess_cores=nchains)
     for site in sites:
         print(f'plotting {site}')
         plot_base(site, outdir=project_dir.joinpath('BASE_plots_normpath'))
 
 
+def export_base_data():
+    project_dir.joinpath('BASE_data_normpath').mkdir(exist_ok=True)
+    for site in sites:
+        print(f'running {site}')
+        dbs, model_name = get_base(site)
+        dbs.export_source_receptor(model_name=model_name, nexport=0.2, project_forward=30, percentile_format='csv',
+                                   outdir=project_dir.joinpath('BASE_data_normpath', site))
+
+
 if __name__ == '__main__':
-    run_all_mp()
+    export_base_data()
+    #run_all_mp()
     pass
