@@ -23,7 +23,7 @@ Detection Power Analysis of Plan Change 1 in the Selwyn District, New Zealand
 
 This project supports a case study of the Selwyn District, New Zealand, for the Our land and Water project Monitoring Freshwater Improvements (https://www.monitoringfreshwater.co.nz/). This case study assess the power of Environment Canterbury's existing monitoring network to detect changes in groundwater levels and nitrate concentrations in the Selwyn District following Plan Change 1.
 
-**`The final report for this project is available in this repository here <The%20Power%20of%20the%20Current%20Monitoring%20Network%20to%20Detect%20Nitrate%20Reductions%20in%20the%20Selwyn%20Waihora%20Zone.pdf>`_**
+**Final Report:** `The final report for this project is available in this repository here <The%20Power%20of%20the%20Current%20Monitoring%20Network%20to%20Detect%20Nitrate%20Reductions%20in%20the%20Selwyn%20Waihora%20Zone.pdf>`_
 
 .. contents:: Table of Contents
 
